@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>SIMRACE · График смен (демо)</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+html,body{margin:0}
+[hidden]{display:none!important}
+
+/* Layout: mobile-first. Sticky week bar on top; each day is a card with one cell per shift; picker is a bottom sheet that walks through empty slots. Desktop widens into a 7-column pit-wall board. Dark single theme by choice (brand). */
+:root{
+  --bg:#0f1011;
+  --panel:#17181a;
+  --panel-2:#1e2023;
+  --line:#2a2c30;
+  --fg:#ecebe8;
+  --muted:#8d8b86;
+  --dim:#5c5b58;
+  --accent:#f39200;
+  --accent-soft:rgba(243,146,0,.12);
+  --warn:#e0a83a;
+  --bad:#e5533d;
+  --ok:#5fae7c;
+  --che-bg:#182026;
+  --che-hover:#1f2a32;
+  --che-line:#6f8ea3;
+  --f-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.4;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;touch-action:manipulation}
+button:disabled{opacity:.4;cursor:default}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.inner{max-width:1240px;margin:0 auto}
+
+/* sticky week bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .inner{display:flex;align-items:center;gap:12px;padding-block:10px}
+.brand{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.eyebrow{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{margin:0;font-size:18px;font-weight:600;white-space:nowrap}
+.weeknav{display:flex;align-items:center;gap:4px}
+.navbtn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--panel);cursor:pointer;display:grid;place-items:center;font-size:18px;flex:none}
+.weeklabel{min-width:118px;text-align:center;display:flex;flex-direction:column;align-items:center;background:none;border:none;cursor:pointer;padding:0 4px}
+.weeklabel b{font-size:14.5px;font-weight:600;white-space:nowrap}
+.weeklabel span{font-family:var(--f-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.weeklabel span.back{color:var(--accent)}
+.menubtn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--panel);cursor:pointer;display:grid;place-items:center;flex:none}
+.menubtn i{display:block;width:16px;height:2px;background:var(--fg);border-radius:1px;box-shadow:0 -5px 0 var(--fg),0 5px 0 var(--fg)}
+
+.main{display:flex;flex-direction:column;gap:14px;padding-block:14px 40px}
+
+/* status + filters */
+.statusrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.status{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex:none}
+.dot.live{background:var(--ok)}
+.dot.off{background:var(--warn)}
+.progress{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.progress b{color:var(--fg);font-weight:500}
+.tools{display:none;gap:8px;flex-wrap:wrap}
+.btn{height:36px;padding:0 14px;border-radius:9px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:13.5px;font-weight:500}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#141414}
+.btn.danger{color:var(--bad)}
+.btn.block{width:100%;height:48px;font-size:15px}
+
+.filters{display:flex;flex-direction:column;gap:8px}
+.seg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px}
+.seg::-webkit-scrollbar{display:none}
+.chip{height:34px;padding:0 13px;border-radius:17px;border:1px solid var(--line);background:transparent;cursor:pointer;font-size:14px;color:var(--muted);display:flex;align-items:center;gap:7px;white-space:nowrap;flex:none}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--fg)}
+.chip .sw{width:8px;height:8px;border-radius:2px}
+
+/* board — mobile: day cards */
+.board{display:flex;flex-direction:column;gap:10px;touch-action:pan-y}
+.col.labels{display:none}
+.col{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;scroll-margin-top:calc(env(safe-area-inset-top,0px) + 76px)}
+.dayhead{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.dayhead .dn{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.dayhead .dd{font-family:var(--f-mono);font-size:14px}
+.dayhead .tg{margin-left:auto;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.col.today{border-color:rgba(243,146,0,.55)}
+.col.today .dn{color:var(--accent)}
+.col.weekend .dn{color:var(--fg)}
+.cell{border:none;border-left:1px solid var(--line);background:transparent;text-align:left;padding:9px 11px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;min-height:68px;position:relative}
+.cell.first{border-left:none}
+.cell:active{background:var(--panel-2)}
+.cell .mob{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who{display:flex;align-items:center;gap:7px;min-width:0}
+.who .sw{width:8px;height:8px;border-radius:2px;flex:none}
+.who .nm{font-size:15.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell.empty .nm{color:var(--dim);font-weight:400}
+.cell.empty .plus{color:var(--accent);font-weight:600}
+.flag{font-size:11.5px;line-height:1.2;color:var(--warn)}
+.flag.bad{color:var(--bad)}
+.cell.has-bad{box-shadow:inset 0 3px 0 var(--bad)}
+.cell.has-warn{box-shadow:inset 0 3px 0 var(--warn)}
+.cell.che,.lab.che{background:var(--che-bg)}
+.cell.che:active{background:var(--che-hover)}
+.lab.che .club,.cell.che .mob{color:var(--che-line)}
+.cell.dim .who,.cell.dim .flag{opacity:.28}
+.cell.hit{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.lab{display:flex;flex-direction:column;justify-content:center;padding:0 14px;border-bottom:1px solid var(--line);gap:2px}
+.lab .club{font-size:13.5px;font-weight:600}
+.lab .slot{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+body.ro .cell{cursor:default}
+body.ro .cell:active{background:transparent}
+body.ro .cell.che:active{background:var(--che-bg)}
+body.ro .cell.empty .plus{display:none}
+
+.swipehint{font-size:12px;color:var(--dim);text-align:center}
+
+/* load */
+.section-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.section-h h2{margin:0;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+.section-h .hint{font-size:12px;color:var(--dim)}
+.load{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.lrow{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0;cursor:pointer;text-align:left}
+.lrow .who .nm{font-weight:600;font-size:14.5px}
+.lrow .h{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);white-space:nowrap}
+.lrow .h b{color:var(--fg);font-weight:500}
+.bar{height:4px;border-radius:2px;background:var(--panel-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.lrow .sub{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow.dim{opacity:.4}
+.lrow.on{border-color:var(--accent)}
+
+/* sheets: bottom sheet on phones, dialog on desktop */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--panel);border:1px solid var(--line);border-bottom:none;border-radius:18px 18px 0 0;width:100%;max-height:88%;overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px);animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 0;flex:none}
+.sh-head{padding:10px 18px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.sh-head .e{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.sh-head .e.che{color:var(--che-line)}
+.sh-head h3{margin:2px 0 0;font-size:18px;font-weight:600}
+.sh-head .s{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);margin-top:2px}
+.x{background:none;border:none;color:var(--muted);font-size:26px;cursor:pointer;line-height:1;padding:2px 6px;margin:-4px -6px 0 0}
+.opts{display:flex;flex-direction:column;padding:6px 8px}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:52px;padding:8px 12px;border-radius:10px;border:none;background:transparent;cursor:pointer;text-align:left}
+.opt:active{background:var(--panel-2)}
+.opt.sel{background:var(--accent-soft)}
+.opt .who .nm{font-size:16px}
+.opt .meta{font-size:12.5px;color:var(--muted);text-align:right;flex:none;max-width:55%}
+.opt .meta.bad{color:var(--bad)}
+.opt .meta.warn{color:var(--warn)}
+.sh-foot{padding:10px 16px 14px;display:flex;gap:8px;border-top:1px solid var(--line)}
+.sh-foot .btn{flex:1;height:46px;font-size:14.5px}
+.remain{font-size:12px;color:var(--muted);padding:0 18px 8px}
+.menu{display:flex;flex-direction:column;padding:6px 8px 10px}
+.mi{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:56px;justify-content:center;padding:8px 12px;border-radius:10px;border:none;background:transparent;cursor:pointer;text-align:left}
+.mi:active{background:var(--panel-2)}
+.mi b{font-size:15.5px;font-weight:500}
+.mi span{font-size:12.5px;color:var(--muted)}
+.mi.danger b{color:var(--bad)}
+.form{padding:14px 18px;display:flex;flex-direction:column;gap:14px}
+.form h4{margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.frow{display:flex;gap:10px;align-items:center}
+.frow .sw{width:10px;height:10px;border-radius:3px;flex:none}
+.inp{flex:1;min-width:0;height:44px;border-radius:9px;border:1px solid var(--line);background:var(--bg);padding:0 12px;color:var(--fg);font:inherit;font-size:16px}
+.inp.t{flex:0 0 84px;font-family:var(--f-mono);text-align:center;font-size:16px}
+.frow .lbl{flex:1;min-width:0;font-size:14px}
+.confirm{padding:16px 18px;color:var(--muted);font-size:14.5px}
+.copybox{width:100%;min-height:220px;font-family:var(--f-mono);font-size:13px;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:10px;resize:vertical}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:11px 16px;border-radius:10px;font-size:14px;font-weight:500;z-index:30;max-width:calc(100% - 32px);text-align:center}
+
+/* phones: week nav takes the bar, brand hidden */
+@media (max-width:560px){
+  .brand{display:none}
+  .weeknav{flex:1;justify-content:space-between}
+  .weeklabel{flex:1}
+  .cell{padding:8px 8px 8px 10px}
+  .who{gap:6px}
+  .who .nm{font-size:15px}
+}
+@media (max-width:360px){.who .nm{font-size:14px}.cell .mob{font-size:9.5px}}
+
+/* desktop: 7-column board */
+@media (min-width:861px){
+  body{font-size:14px}
+  .top{position:static;border-bottom:none}
+  .top .inner{padding-block:18px 14px;border-bottom:1px solid var(--line);align-items:flex-end}
+  .eyebrow{font-size:11px}
+  h1{font-size:26px}
+  .menubtn{display:none}
+  .tools{display:flex}
+  .weeklabel{min-width:190px}
+  .filters{flex-direction:row;flex-wrap:wrap;gap:10px 20px;align-items:center}
+  .seg{margin:0;padding:0}
+  .chip{height:30px;font-size:13px}
+  .board{display:grid;grid-template-columns:170px repeat(7,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+  .col,.col.labels{display:grid;grid-template-columns:none;grid-template-rows:46px repeat(var(--n,3),60px);border:none;border-left:1px solid var(--line);border-radius:0;background:transparent;min-width:0}
+  .col.labels{border-left:none;background:var(--bg)}
+  .col.today{border-color:var(--line)}
+  .col.today .dayhead{box-shadow:inset 0 2px 0 var(--accent)}
+  .dayhead{flex-direction:column;align-items:flex-start;justify-content:center;gap:0;padding:0 12px}
+  .dayhead .tg{display:none}
+  .dayhead .dn{font-size:12px}
+  .cell{border-left:none;border-bottom:1px solid var(--line);min-height:0;padding:6px 12px;gap:2px}
+  .cell:last-child,.lab:last-child{border-bottom:none}
+  .cell .mob{display:none}
+  .cell:hover{background:var(--panel-2)}
+  .cell.che:hover{background:var(--che-hover)}
+  body.ro .cell:hover{background:transparent}
+  body.ro .cell.che:hover{background:var(--che-bg)}
+  .cell.grp,.lab.grp{box-shadow:inset 0 1px 0 var(--dim)}
+  .cell.has-bad{box-shadow:inset 3px 0 0 var(--bad)}
+  .cell.has-warn{box-shadow:inset 3px 0 0 var(--warn)}
+  .who .nm{font-size:15px}
+  .swipehint{display:none}
+  .load{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+  .scrim{align-items:center;padding:16px}
+  .sheet{width:min(420px,100%);border-radius:14px;border-bottom:1px solid var(--line);max-height:calc(100% - 32px)}
+  .sheet.wide{width:min(560px,100%)}
+  .grab{display:none}
+  .sh-head{padding-top:16px}
+  .sh-foot{justify-content:flex-end}
+  .sh-foot .btn{flex:0 0 auto;height:36px;font-size:13.5px}
+  .opt{min-height:44px}
+  .opt:hover,.mi:hover{background:var(--panel-2)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.banner{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft);font-size:13.5px}
+.banner span{color:var(--muted)}
+code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding:1px 6px;border-radius:5px;user-select:all}
+.gate{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+.gate-in{max-width:340px;display:flex;flex-direction:column;gap:8px}
+.gate h2{margin:0;font-size:22px;font-weight:600}
+.gate p{margin:0;color:var(--muted);font-size:15px}
+</style>
+</head>
+<body>
+<header class="top gut">
+  <div class="inner">
+    <div class="brand">
+      <span class="eyebrow">SIMRACE</span>
+      <h1>График смен</h1>
+    </div>
+    <div class="weeknav">
+      <button class="navbtn" id="prev" aria-label="Предыдущая неделя">‹</button>
+      <button class="weeklabel" id="wkBtn" aria-label="Вернуться к текущей неделе"><b id="wkTitle">—</b><span id="wkSub">—</span></button>
+      <button class="navbtn" id="next" aria-label="Следующая неделя">›</button>
+    </div>
+    <button class="menubtn" id="menuBtn" aria-label="Действия"><i></i></button>
+  </div>
+</header>
+
+<div class="gut">
+  <div class="inner main">
+    <div class="banner" id="setupBanner" hidden></div>
+
+    <div class="statusrow">
+      <div class="tools" id="tools">
+        <button class="btn" id="copyPrev">Перенести с прошлой недели</button>
+        <button class="btn" id="exportTg">Текст для Telegram</button>
+        <button class="btn" id="team">Команда и смены</button>
+        <button class="btn danger" id="clearWk">Очистить неделю</button>
+      </div>
+      <span class="progress" id="progress"></span>
+      <div class="status"><span class="dot" id="sdot"></span><span id="stext">Загрузка…</span></div>
+    </div>
+
+    <div class="filters">
+      <div class="seg" id="fClub" aria-label="Фильтр по точке"></div>
+      <div class="seg" id="fAdm" aria-label="Фильтр по администратору"></div>
+    </div>
+
+    <main class="board" id="board" aria-label="Смены на неделю"></main>
+    <div class="swipehint">Листайте недели свайпом влево и вправо</div>
+
+    <section style="display:flex;flex-direction:column;gap:10px">
+      <div class="section-h"><h2>Нагрузка за неделю</h2><span class="hint">Красная метка — пересечение смен, жёлтая — мало отдыха между сменами</span></div>
+      <div class="load" id="load"></div>
+    </section>
+  </div>
+</div>
+
+<div class="gate" id="gate" hidden>
+  <div class="gate-in">
+    <span class="eyebrow">SIMRACE</span>
+    <h2 id="gateTitle">График смен</h2>
+    <p id="gateText"></p>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+(function(){
+  const tg=window.Telegram&&window.Telegram.WebApp;
+  const INIT=tg?tg.initData:"";
+  if(tg){
+    try{tg.ready();tg.expand();tg.setHeaderColor("#0f1011");tg.setBackgroundColor("#0f1011");if(tg.setBottomBarColor)tg.setBottomBarColor("#0f1011");if(tg.disableVerticalSwipes)tg.disableVerticalSwipes()}catch(_){}
+  }
+  const haptic={
+    tap(){try{tg&&tg.HapticFeedback.selectionChanged()}catch(_){}},
+    ok(){try{tg&&tg.HapticFeedback.notificationOccurred("success")}catch(_){}},
+    err(){try{tg&&tg.HapticFeedback.notificationOccurred("error")}catch(_){}}
+  };
+
+  const PALETTE=["#f39200","#7fa7c9","#b9a37a","#8fb996","#c98f8f","#a99bc9","#cfcfcf"];
+  const DOW=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+  const DOW_FULL=["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
+  const MON=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+  const SHORT_MOB={"Большакова":"Бол","Чернышевского":"Черн"};
+
+  let team={admins:[],slots:[]}, cells={}, loaded=false;
+  let weekStart=mondayOf(new Date());
+  let canWrite=false, scrolledToday=false, reqSeq=0, writing=0;
+  let fClub="all", fAdmin=null;
+  try{const v=JSON.parse(localStorage.getItem("sr-filters")||"{}");if(v.club)fClub=v.club;if(v.admin)fAdmin=v.admin}catch(_){}
+  function saveF(){try{localStorage.setItem("sr-filters",JSON.stringify({club:fClub,admin:fAdmin}))}catch(_){}}
+
+  function clone(o){return JSON.parse(JSON.stringify(o))}
+  function mondayOf(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
+  function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+  function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+  function days(){return Array.from({length:7},(_,i)=>addDays(weekStart,i))}
+  function key(d,slotId){return iso(d)+"_"+slotId}
+  function weekNo(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const dn=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-dn);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil(((t-y)/864e5+1)/7)}
+  function mins(s){const m=/^(\d{1,2}):(\d{2})$/.exec(s||"");return m?(+m[1])*60+(+m[2]):null}
+  function hoursOf(slot){const a=mins(slot.from),b=mins(slot.to);if(a==null||b==null)return 12;let d=b-a;if(d<=0)d+=1440;return d/60}
+  function interval(dayIdx,slot){const a=mins(slot.from)??600;let b=mins(slot.to)??1320;if(b<=a)b+=1440;return[dayIdx*1440+a,dayIdx*1440+b]}
+  function admin(id){return team.admins.find(a=>a.id===id)}
+  function color(id){const i=team.admins.findIndex(a=>a.id===id);return PALETTE[(i<0?0:i)%PALETTE.length]}
+  function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+  function get(d,slotId){return cells[key(d,slotId)]||null}
+  function clubs(){return[...new Set(team.slots.map(s=>s.short))]}
+  function vis(){return fClub==="all"?team.slots:team.slots.filter(s=>s.short===fClub)}
+  function isChe(s){return s.id.startsWith("che")}
+  function isCurrentWeek(){return iso(weekStart)===iso(mondayOf(new Date()))}
+
+  // ---------- API ----------
+  // DEMO: data lives only on this device (localStorage), no server
+  const SEED={team:{"admins": [{"id": "a1", "name": "Виктор"}, {"id": "a2", "name": "Роман"}, {"id": "a3", "name": "Максим"}, {"id": "a4", "name": "Даниил"}, {"id": "a5", "name": "Александр"}, {"id": "a6", "name": "Егор"}, {"id": "a7", "name": "Макар"}], "slots": [{"id": "bol-d", "club": "Большакова, 99А", "short": "Большакова", "label": "День", "from": "10:00", "to": "22:00"}, {"id": "bol-n", "club": "Большакова, 99А", "short": "Большакова", "label": "Ночь", "from": "22:00", "to": "10:00"}, {"id": "che-d", "club": "Чернышевского, 4А", "short": "Чернышевского", "label": "День", "from": "10:00", "to": "22:00"}]},weeks:{"2026-10-19":{"2026-10-19_bol-d": "a6", "2026-10-19_bol-n": "a7", "2026-10-19_che-d": "a4", "2026-10-20_bol-d": "a5", "2026-10-20_bol-n": "a7", "2026-10-20_che-d": "a4", "2026-10-21_bol-d": "a1", "2026-10-21_bol-n": "a7", "2026-10-21_che-d": "a4", "2026-10-22_bol-d": "a1", "2026-10-22_bol-n": "a7", "2026-10-22_che-d": "a5", "2026-10-23_bol-d": "a1", "2026-10-23_bol-n": "a6", "2026-10-23_che-d": "a5", "2026-10-24_bol-d": "a5", "2026-10-24_bol-n": "a6", "2026-10-24_che-d": "a1", "2026-10-25_bol-d": "a3", "2026-10-25_bol-n": "a7", "2026-10-25_che-d": "a2"},"2026-10-26":{"2026-10-26_bol-d": "a3", "2026-10-26_bol-n": "a7", "2026-10-26_che-d": "a1"}}};
+  function demoDb(){try{const v=JSON.parse(localStorage.getItem("sr-demo")||"null");if(v&&v.team)return v}catch(_){}return JSON.parse(JSON.stringify(SEED))}
+  function demoSave(db){try{localStorage.setItem("sr-demo",JSON.stringify(db))}catch(_){}}
+  async function api(action,p){
+    const db=demoDb();p=p||{};
+    if(action==="state")return{team:db.team,cells:db.weeks[p.week]||{},canEdit:true,setup:false,me:{id:0}};
+    if(action==="setCell"){const c=db.weeks[p.week]||{};if(p.admin)c[p.key]=p.admin;else delete c[p.key];db.weeks[p.week]=c;demoSave(db);return{cells:c}}
+    if(action==="setWeek"){db.weeks[p.week]=p.cells||{};demoSave(db);return{cells:db.weeks[p.week]}}
+    if(action==="setTeam"){db.team=p.team;demoSave(db);return{team:db.team}}
+    throw new Error("Неизвестное действие");
+  }
+
+  // ---------- conflicts ----------
+  function analyze(){
+    const ds=days(), res={}, byAdmin={};
+    ds.forEach((d,i)=>team.slots.forEach(s=>{const a=get(d,s.id);if(!a)return;(byAdmin[a]=byAdmin[a]||[]).push({k:key(d,s.id),iv:interval(i,s),slot:s})}));
+    Object.values(byAdmin).forEach(list=>{
+      list.sort((x,y)=>x.iv[0]-y.iv[0]);
+      for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+        const A=list[i],B=list[j];
+        if(B.iv[0]<A.iv[1]){mark(res,A.k,"bad","Пересечение: "+B.slot.short+" "+B.slot.label.toLowerCase());mark(res,B.k,"bad","Пересечение: "+A.slot.short+" "+A.slot.label.toLowerCase())}
+        else if(B.iv[0]-A.iv[1]<600){mark(res,B.k,"warn",B.iv[0]===A.iv[1]?"24 часа подряд":"Мало отдыха")}
+      }
+    });
+    return res;
+  }
+  function mark(r,k,lvl,txt){if(!r[k]||r[k].lvl!=="bad")r[k]={lvl,txt}}
+
+  // ---------- render ----------
+  const $=id=>document.getElementById(id);
+  function render(){
+    if(!clubs().includes(fClub))fClub="all";
+    if(fAdmin&&team.admins.length&&!admin(fAdmin))fAdmin=null;
+    const ds=days(), today=iso(new Date()), flags=analyze(), VS=vis(), end=ds[6];
+    $("wkTitle").textContent=ds[0].getDate()+(ds[0].getMonth()!==end.getMonth()?" "+MON[ds[0].getMonth()].slice(0,3):"")+" — "+end.getDate()+" "+MON[end.getMonth()];
+    const sub=$("wkSub");
+    if(isCurrentWeek()){sub.textContent="Неделя "+weekNo(ds[0])+" · текущая";sub.className=""}
+    else{sub.textContent="Неделя "+weekNo(ds[0])+" · к текущей";sub.className="back"}
+    $("board").style.setProperty("--n",VS.length||1);
+    renderFilters();
+
+    let h='<div class="col labels"><div class="dayhead"></div>';
+    VS.forEach((s,i)=>{const g=i>0&&VS[i-1].club!==s.club;h+=`<div class="lab${g?" grp":""}${isChe(s)?" che":""}"><span class="club">${esc(s.club)}</span><span class="slot">${esc(s.label)} · ${esc(s.from)}–${esc(s.to)}</span></div>`});
+    h+='</div>';
+    ds.forEach((d,i)=>{
+      const isToday=iso(d)===today;
+      const cls=["col"];if(isToday)cls.push("today");if(i>4)cls.push("weekend");
+      h+=`<div class="${cls.join(" ")}" id="day-${i}"><div class="dayhead"><span class="dn">${DOW_FULL[i]}</span><span class="dd">${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}</span>${isToday?'<span class="tg">Сегодня</span>':""}</div>`;
+      VS.forEach((s,si)=>{
+        const a=get(d,s.id), ad=a&&admin(a), k=key(d,s.id), f=flags[k];
+        const g=si>0&&VS[si-1].club!==s.club;
+        const c=["cell"];if(si===0)c.push("first");if(!ad)c.push("empty");if(g)c.push("grp");if(isChe(s))c.push("che");
+        if(fAdmin)c.push(a===fAdmin?"hit":"dim");
+        if(f)c.push(f.lvl==="bad"?"has-bad":"has-warn");
+        const mobLabel=(VS.length>1||fClub==="all")?(SHORT_MOB[s.short]||s.short)+" · "+s.label.toLowerCase():s.label+" "+s.from+"–"+s.to;
+        h+=`<button class="${c.join(" ")}" data-d="${i}" data-s="${s.id}" aria-label="${DOW_FULL[i]}, ${esc(s.short)}, ${esc(s.label)}: ${ad?esc(ad.name):"не назначен"}">
+          <span class="mob">${esc(mobLabel)}</span>
+          <span class="who">${ad?`<span class="sw" style="background:${color(a)}"></span><span class="nm">${esc(ad.name)}</span>`:(loaded?`<span class="nm"><span class="plus">+</span> Назначить</span>`:`<span class="nm">…</span>`)}</span>
+          ${f?`<span class="flag ${f.lvl==="bad"?"bad":""}">${esc(f.txt)}</span>`:""}
+        </button>`;
+      });
+      h+='</div>';
+    });
+    $("board").innerHTML=h;
+
+    const total=7*team.slots.length;let filled=0;ds.forEach(d=>team.slots.forEach(s=>{if(admin(get(d,s.id)))filled++}));
+    $("progress").innerHTML=loaded?`Заполнено <b>${filled}</b> из ${total}`:"";
+
+    const load={};team.admins.forEach(a=>load[a.id]={h:0,n:0,nights:0,clubs:new Set()});
+    ds.forEach(d=>team.slots.forEach(s=>{const a=get(d,s.id);if(a&&load[a]){load[a].h+=hoursOf(s);load[a].n++;if(s.label==="Ночь")load[a].nights++;load[a].clubs.add(s.short)}}));
+    const max=Math.max(48,...Object.values(load).map(x=>x.h));
+    $("load").innerHTML=team.admins.map(a=>{const L=load[a.id];return `<button class="lrow${fAdmin?(fAdmin===a.id?" on":" dim"):""}" data-adm="${a.id}" aria-pressed="${fAdmin===a.id}">
+      <span class="who"><span class="sw" style="background:${color(a.id)}"></span><span class="nm">${esc(a.name)}</span></span>
+      <span class="h"><b>${fmtH(L.h)}</b> ч · ${L.n} ${plural(L.n,"смена","смены","смен")}</span>
+      <span class="bar"><i style="width:${(L.h/max*100).toFixed(1)}%"></i></span>
+      <span class="sub">${L.n?[...L.clubs].join(", ")+(L.nights?" · ночей: "+L.nights:""):"Нет смен"}</span>
+    </button>`}).join("");
+
+    const ro=!canWrite;
+    ["copyPrev","clearWk","team"].forEach(id=>$(id).hidden=ro);
+    document.body.classList.toggle("ro",ro);
+
+    if(loaded&&!scrolledToday&&isCurrentWeek()&&window.matchMedia("(max-width:860px)").matches){
+      scrolledToday=true;const di=(new Date().getDay()+6)%7;const t=$("day-"+di);
+      if(t&&di>1)requestAnimationFrame(()=>t.scrollIntoView({block:"start"}));
+    }
+  }
+  function renderFilters(){
+    $("fClub").innerHTML=[["all","Все точки"],...clubs().map(c=>[c,c])].map(([v,l])=>`<button class="chip${fClub===v?" on":""}" data-club="${esc(v)}" aria-pressed="${fClub===v}">${esc(l)}</button>`).join("");
+    $("fAdm").innerHTML=`<button class="chip${!fAdmin?" on":""}" data-adm="" aria-pressed="${!fAdmin}">Все администраторы</button>`+team.admins.map(a=>`<button class="chip${fAdmin===a.id?" on":""}" data-adm="${a.id}" aria-pressed="${fAdmin===a.id}"><span class="sw" style="background:${color(a.id)}"></span>${esc(a.name)}</button>`).join("");
+  }
+  function fmtH(h){return Number.isInteger(h)?String(h):h.toFixed(1).replace(".",",")}
+  function plural(n,a,b,c){const m=n%10,mm=n%100;if(m===1&&mm!==11)return a;if(m>=2&&m<=4&&(mm<10||mm>=20))return b;return c}
+
+  // ---------- sheets ----------
+  const root=$("modalRoot");
+  function onBack(){close()}
+  function openModal(html,wide){
+    root.innerHTML=`<div class="scrim" id="scrim"><div class="sheet${wide?" wide":""}" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;
+    $("scrim").addEventListener("click",e=>{if(e.target.id==="scrim")close()});
+    root.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",close));
+    document.body.style.overflow="hidden";
+    if(tg&&tg.BackButton){try{tg.BackButton.offClick(onBack);tg.BackButton.onClick(onBack);tg.BackButton.show()}catch(_){}}
+  }
+  function close(){root.innerHTML="";document.body.style.overflow="";if(tg&&tg.BackButton){try{tg.BackButton.hide();tg.BackButton.offClick(onBack)}catch(_){}}}
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
+
+  function busyInfo(adminId,dayIdx,slot){
+    const iv=interval(dayIdx,slot);let lvl=null,txt="";
+    days().forEach((d,i)=>team.slots.forEach(s=>{if(i===dayIdx&&s.id===slot.id)return;if(get(d,s.id)!==adminId)return;
+      const o=interval(i,s);
+      if(o[0]<iv[1]&&iv[0]<o[1]){lvl="bad";txt=`Занят: ${DOW[i]}, ${(SHORT_MOB[s.short]||s.short).toLowerCase()} ${s.label.toLowerCase()}`}
+      else if(lvl!=="bad"&&Math.min(Math.abs(iv[0]-o[1]),Math.abs(o[0]-iv[1]))<600){lvl="warn";txt=`Рядом смена: ${DOW[i]}, ${s.label.toLowerCase()}`}
+    }));
+    return{lvl,txt};
+  }
+  function weekHours(adminId){let h=0;days().forEach(d=>team.slots.forEach(s=>{if(get(d,s.id)===adminId)h+=hoursOf(s)}));return h}
+  function emptySlots(){const out=[];days().forEach((d,i)=>vis().forEach(s=>{if(!admin(get(d,s.id)))out.push([i,s.id])}));return out}
+  function nextEmpty(dayIdx,slotId){
+    const order=[];days().forEach((d,i)=>vis().forEach(s=>order.push([i,s.id])));
+    const pos=order.findIndex(([i,s])=>i===dayIdx&&s===slotId);
+    for(let n=1;n<order.length;n++){const [i,s]=order[(pos+n)%order.length];if(!admin(get(days()[i],s)))return[i,s]}
+    return null;
+  }
+
+  function openCell(dayIdx,slotId){
+    if(!canWrite)return;
+    haptic.tap();
+    const d=days()[dayIdx], s=team.slots.find(x=>x.id===slotId), cur=get(d,slotId), wasEmpty=!admin(cur);
+    const left=emptySlots().length;
+    const opts=team.admins.map(a=>{const b=busyInfo(a.id,dayIdx,s);
+      return `<button class="opt${a.id===cur?" sel":""}" data-a="${a.id}"><span class="who"><span class="sw" style="background:${color(a.id)}"></span><span class="nm">${esc(a.name)}</span></span><span class="meta ${b.lvl||""}">${b.lvl?esc(b.txt):fmtH(weekHours(a.id))+" ч"}</span></button>`}).join("");
+    openModal(`<div class="sh-head"><div><div class="e${isChe(s)?" che":""}">${esc(s.club)}</div><h3>${DOW_FULL[dayIdx]}, ${d.getDate()} ${MON[d.getMonth()]}</h3><div class="s">${esc(s.label)} · ${esc(s.from)}–${esc(s.to)}</div></div><button class="x" data-close aria-label="Закрыть">×</button></div>
+      <div class="opts">${opts}</div>
+      ${wasEmpty&&left>1?`<div class="remain">Пустых смен на неделе: ${left}. После выбора откроется следующая.</div>`:""}
+      <div class="sh-foot">${!wasEmpty?'<button class="btn danger" id="clr">Снять со смены</button>':""}${wasEmpty&&left>1?'<button class="btn" id="skip">Пропустить</button>':""}<button class="btn" data-close>Готово</button></div>`);
+    root.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>{
+      setCell(key(d,slotId),b.dataset.a);haptic.tap();
+      if(wasEmpty){const n=nextEmpty(dayIdx,slotId);if(n){openCell(n[0],n[1]);return}haptic.ok();toast("Все смены заполнены")}
+      close();
+    }));
+    const c=$("clr");if(c)c.addEventListener("click",()=>{setCell(key(d,slotId),null);close()});
+    const sk=$("skip");if(sk)sk.addEventListener("click",()=>{const n=nextEmpty(dayIdx,slotId);if(n)openCell(n[0],n[1]);else close()});
+  }
+
+  function openMenu(){
+    const ro=!canWrite;
+    const items=[
+      !ro&&["copyPrev","Перенести с прошлой недели","Скопировать назначения на эту неделю"],
+      ["exportTg","Отправить график в чат","Текстом, в любой чат Telegram"],
+      !ro&&["team","Команда и смены","Имена администраторов и время смен"],
+      !isCurrentWeek()&&["thisWeek","К текущей неделе",""],
+      !ro&&["clearWk","Очистить неделю","Удалить все назначения этой недели","danger"]
+    ].filter(Boolean);
+    openModal(`<div class="sh-head"><div><div class="e">Действия</div><h3>${esc($("wkTitle").textContent)}</h3></div><button class="x" data-close aria-label="Закрыть">×</button></div>
+      <div class="menu">${items.map(([id,t,s,cl])=>`<button class="mi ${cl||""}" data-act="${id}"><b>${esc(t)}</b>${s?`<span>${esc(s)}</span>`:""}</button>`).join("")}</div>`);
+    root.querySelectorAll(".mi").forEach(b=>b.addEventListener("click",()=>{close();ACT[b.dataset.act]()}));
+  }
+
+  function openTeam(){
+    const rows=team.admins.map((a,i)=>`<div class="frow"><span class="sw" style="background:${PALETTE[i%PALETTE.length]}"></span><input class="inp" id="adm-${a.id}" value="${esc(a.name)}" maxlength="40" aria-label="Имя администратора ${i+1}"></div>`).join("");
+    const slots=team.slots.map(s=>`<div class="frow"><span class="lbl">${esc(s.short)} · ${esc(s.label)}</span><input class="inp t" id="from-${s.id}" value="${esc(s.from)}" inputmode="numeric" aria-label="Начало"><input class="inp t" id="to-${s.id}" value="${esc(s.to)}" inputmode="numeric" aria-label="Конец"></div>`).join("");
+    openModal(`<div class="sh-head"><div><div class="e">Настройки</div><h3>Команда и смены</h3></div><button class="x" data-close aria-label="Закрыть">×</button></div>
+      <div class="form"><h4>Администраторы</h4>${rows}<h4>Время смен</h4>${slots}</div>
+      <div class="sh-foot"><button class="btn" data-close>Отмена</button><button class="btn primary" id="saveTeam">Сохранить</button></div>`,true);
+    $("saveTeam").addEventListener("click",async()=>{
+      const t=clone(team);
+      t.admins.forEach(a=>{const v=$("adm-"+a.id).value.trim();if(v)a.name=v});
+      for(const s of t.slots){const f=$("from-"+s.id).value.trim(),to=$("to-"+s.id).value.trim();
+        if(mins(f)==null||mins(to)==null){toast("Время в формате ЧЧ:ММ, например 10:00");return}s.from=f;s.to=to}
+      const old=team;team=t;render();close();
+      try{const r=await api("setTeam",{team:t});team=r.team;render();haptic.ok();toast("Сохранено")}catch(e){team=old;render();fail(e)}
+    });
+  }
+
+  function confirmBox(title,text,okLabel,fn){
+    openModal(`<div class="sh-head"><div><h3>${esc(title)}</h3></div><button class="x" data-close aria-label="Закрыть">×</button></div><div class="confirm">${esc(text)}</div><div class="sh-foot"><button class="btn" data-close>Отмена</button><button class="btn primary" id="ok">${esc(okLabel)}</button></div>`);
+    $("ok").addEventListener("click",()=>{close();fn()});
+  }
+
+  function weekText(){
+    const ds=days();let t=`SIMRACE · График смен ${$("wkTitle").textContent}\n`;
+    ds.forEach((d,i)=>{t+=`\n${DOW[i]} ${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}\n`;
+      team.slots.forEach(s=>{const a=admin(get(d,s.id));t+=`${s.short} ${s.label.toLowerCase()} (${s.from}–${s.to}): ${a?a.name:"—"}\n`})});
+    return t;
+  }
+  function exportText(){
+    const t=weekText();
+    openModal(`<div class="sh-head"><div><div class="e">Экспорт</div><h3>График текстом</h3></div><button class="x" data-close aria-label="Закрыть">×</button></div>
+      <div class="form"><textarea class="copybox" id="tgText" readonly></textarea></div>
+      <div class="sh-foot"><button class="btn" id="cp">Скопировать</button>${tg?'<button class="btn primary" id="share">Отправить в чат</button>':""}</div>`,true);
+    $("tgText").value=t;
+    $("cp").addEventListener("click",()=>{const ta=$("tgText");
+      (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{haptic.ok();toast("Скопировано")}).catch(()=>{ta.focus();ta.select();try{document.execCommand("copy");toast("Скопировано")}catch(_){toast("Текст выделен — скопируйте вручную")}})});
+    const sh=$("share");if(sh)sh.addEventListener("click",()=>{try{tg.openTelegramLink("https://t.me/share/url?url="+encodeURIComponent(t))}catch(_){toast("Не удалось открыть выбор чата")}});
+  }
+
+  let tt;function toast(m){clearTimeout(tt);let el=document.querySelector(".toast");if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");document.body.appendChild(el)}el.textContent=m;tt=setTimeout(()=>el.remove(),2400)}
+  function fail(e){haptic.err();toast(e&&e.message?e.message:"Не удалось сохранить");if(e&&e.status===403){canWrite=false;render()}setTimeout(()=>load(true),0)}
+
+  // ---------- data ----------
+  async function setCell(k,adminId){
+    cells={...cells};if(adminId)cells[k]=adminId;else delete cells[k];render();
+    const wk=iso(weekStart);writing++;
+    try{const r=await api("setCell",{week:wk,key:k,admin:adminId||null});if(wk===iso(weekStart)&&writing===1){cells=r.cells||{};render()}}
+    catch(e){fail(e)}
+    finally{writing--}
+  }
+  async function setWeek(map){
+    cells={...map};render();writing++;
+    try{const r=await api("setWeek",{week:iso(weekStart),cells:map});cells=r.cells||{};render();return true}
+    catch(e){fail(e);return false}
+    finally{writing--}
+  }
+  function status(ok,txt){$("sdot").className="dot "+(ok?"live":"off");$("stext").textContent=txt}
+
+  async function load(silent){
+    const seq=++reqSeq, wk=iso(weekStart);
+    if(!silent){loaded=false;cells={};render()}
+    try{
+      const r=await api("state",{week:wk});
+      if(seq!==reqSeq||writing)return;
+      team=r.team;cells=r.cells||{};canWrite=!!r.canEdit;loaded=true;
+      status(false,"Демо · данные только на этом телефоне");
+      const b=$("setupBanner");
+      if(r.setup){b.hidden=false;b.innerHTML=`<b>Настройка: впишите свой Telegram ID в config.php</b><span>Ваш ID: <code>${esc(r.me.id)}</code>. Добавьте его в OWNER_IDS — после этого график сможете менять только вы.</span>`}
+      else b.hidden=true;
+      render();
+    }catch(e){
+      if(seq!==reqSeq)return;
+      if(e.status===401||e.status===403||e.status===500&&!loaded){showGate(e)}
+      else status(false,"Нет связи, повторяю…");
+    }
+  }
+  function showGate(e){
+    const g=$("gate");g.hidden=false;
+    if(e.status===401){$("gateTitle").textContent="Откройте через Telegram";$("gateText").textContent="График доступен только из бота SIMRACE в Telegram."}
+    else if(e.status===403){$("gateTitle").textContent="Нет доступа";$("gateText").innerHTML=`Попросите руководителя добавить вас в список. Ваш Telegram ID: <code>${esc(e.body&&e.body.me?e.body.me.id:"—")}</code>`}
+    else{$("gateTitle").textContent="График не настроен";$("gateText").textContent=e.message}
+  }
+
+  async function copyPrev(){
+    let src={};
+    try{const r=await api("state",{week:iso(addDays(weekStart,-7))});src=r.cells||{}}catch(e){toast("Не удалось загрузить прошлую неделю");return}
+    const map={};Object.keys(src).forEach(k=>{const [dt,sl]=k.split("_");const [y,m,dd]=dt.split("-").map(Number);map[iso(addDays(new Date(y,m-1,dd),7))+"_"+sl]=src[k]});
+    if(!Object.keys(map).length){toast("На прошлой неделе график пустой");return}
+    const go=async()=>{if(await setWeek(map)){haptic.ok();toast("График перенесён")}};
+    if(Object.keys(cells).length)confirmBox("Перенести график?","На этой неделе уже есть назначения. Они будут заменены графиком прошлой недели.","Заменить",go);else go();
+  }
+  function goWeek(n){haptic.tap();weekStart=n===0?mondayOf(new Date()):addDays(weekStart,7*n);window.scrollTo({top:0});load(false)}
+
+  const ACT={
+    copyPrev,
+    exportTg:exportText,
+    team:openTeam,
+    thisWeek:()=>goWeek(0),
+    clearWk:()=>confirmBox("Очистить неделю?","Все назначения этой недели будут удалены.","Очистить",async()=>{if(await setWeek({}))toast("Неделя очищена")})
+  };
+
+  // ---------- events ----------
+  $("board").addEventListener("click",e=>{const c=e.target.closest(".cell");if(c)openCell(+c.dataset.d,c.dataset.s)});
+  $("prev").addEventListener("click",()=>goWeek(-1));
+  $("next").addEventListener("click",()=>goWeek(1));
+  $("wkBtn").addEventListener("click",()=>{if(!isCurrentWeek())goWeek(0)});
+  $("menuBtn").addEventListener("click",openMenu);
+  Object.keys(ACT).forEach(id=>{const b=$(id);if(b)b.addEventListener("click",ACT[id])});
+  $("fClub").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;haptic.tap();fClub=b.dataset.club;saveF();render()});
+  $("fAdm").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;haptic.tap();fAdmin=b.dataset.adm||null;saveF();render()});
+  $("load").addEventListener("click",e=>{const b=e.target.closest(".lrow");if(!b)return;haptic.tap();const id=b.dataset.adm;fAdmin=fAdmin===id?null:id;saveF();render()});
+
+  let sx=null,sy=null;
+  $("board").addEventListener("touchstart",e=>{if(e.touches.length!==1){sx=null;return}sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+  $("board").addEventListener("touchend",e=>{if(sx==null)return;const t=e.changedTouches[0];const dx=t.clientX-sx,dy=t.clientY-sy;sx=null;
+    if(Math.abs(dx)>70&&Math.abs(dy)<45)goWeek(dx<0?1:-1)},{passive:true});
+
+  // live refresh: every 20 s while visible, and on return to the app
+  
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&loaded)load(true)});
+
+  render();
+  load(false);
+})();
+</script>
+
+</body>
+</html>
