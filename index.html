@@ -375,6 +375,48 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 .board .col.weekend .dayhead{border-bottom-color:var(--wk-line)}
 .board .col.weekend .cell{border-left-color:var(--wk-line)}
 .board .col.weekend .dn{color:#f2c27a}
+.modeseg{display:grid;grid-template-columns:1fr 1fr}
+.modeseg button{height:40px;font-size:15px}
+.modeseg button:disabled{opacity:.35;cursor:not-allowed}
+.tacts{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:8px}
+.tacts .btn{height:42px;padding:0 10px;font-size:14px;white-space:nowrap}
+#selBtn.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.modehint{font-size:12.5px;color:var(--muted);margin-top:-4px}
+.opt:disabled,.slotopt:disabled{opacity:.42;cursor:not-allowed}
+.opt:disabled .meta,.slotopt:disabled .r{opacity:1}
+.sg-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px 0}
+.sg-tiles .tl{border-radius:10px;padding:8px 10px;border:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;gap:1px}
+.sg-tiles .tl b{font-family:var(--f-mono);font-size:20px;font-weight:500}
+.sg-tiles .tl span{font-size:12px;color:var(--muted)}
+.sg-tiles .tl.new{border-color:var(--accent)}.sg-tiles .tl.new b{color:var(--accent)}
+.sg-tiles .tl.hole{border-color:rgba(229,83,61,.6)}.sg-tiles .tl.hole b{color:var(--bad)}
+.sg-tiles .tl.okk b{color:var(--ok)}
+.sg-legend{display:flex;gap:14px;padding:10px 16px 4px;font-size:12px;color:var(--muted)}
+.sg-legend span{display:flex;align-items:center;gap:6px}
+.sg-legend .k{display:inline-block;width:14px;height:14px;border-radius:4px}
+.sg-legend .k.new{box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
+.sg-legend .k.old{background:var(--panel-2)}
+.sg-legend .k.hole{box-shadow:inset 0 0 0 1.5px var(--bad)}
+.sg-grid{display:flex;flex-direction:column;gap:6px;padding:6px 16px 4px}
+.sg-day{display:grid;grid-template-columns:44px repeat(3,minmax(0,1fr));gap:5px;align-items:stretch}
+.sg-dh{display:flex;flex-direction:column;justify-content:center;font-size:12px;line-height:1.15}
+.sg-dh b{font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:12px}
+.sg-dh span{font-family:var(--f-mono);color:var(--muted);font-size:11px}
+.sg-day.wk .sg-dh b{color:#f2c27a}
+.sg-s{min-width:0;border-radius:8px;padding:5px 7px;display:flex;flex-direction:column;gap:3px;background:var(--panel-2)}
+.sg-s i.lbl{width:auto;height:auto;align-self:flex-start;padding:1px 5px;border-radius:4px;font-size:10px}
+.sg-s .nm{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sg-s.st-old{opacity:.6}
+.sg-s.st-new{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.sg-s.st-new .nm{font-weight:600}
+.sg-s.st-hole{background:transparent;box-shadow:inset 0 0 0 1.5px var(--bad)}
+.sg-s.st-hole .nm{color:var(--bad)}
+.sg-sub{padding:12px 16px 6px;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sg-load{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 16px 12px}
+.sg-p{position:relative;display:flex;justify-content:space-between;gap:6px;padding:6px 9px 9px;border-radius:8px;background:var(--bg);font-size:13px;overflow:hidden}
+.sg-p .h{font-family:var(--f-mono);color:var(--muted);font-size:12px}
+.sg-p i{position:absolute;left:0;bottom:0;height:3px;background:var(--accent);border-radius:0 2px 2px 0}
+@media (min-width:861px){.modeseg,.tacts{max-width:560px}}
 .resetrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
 .resetrow .rl{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .resetrow .rb{display:flex;gap:6px}
@@ -414,16 +456,14 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 
     <!-- ========== TABLE VIEW ========== -->
     <section id="viewTable" style="display:flex;flex-direction:column;gap:12px">
-      <div class="ttools">
-        <div class="modeseg" role="group" aria-label="Режим">
-          <button id="mWish">Дано</button>
-          <button id="mAssign" class="assign">Назначаю</button>
-        </div>
-        <div class="right">
-          <button class="btn" id="selBtn">Выбрать несколько</button>
-          <button class="autochip" id="autoChip" hidden></button>
-          <button class="btn primary" id="suggestBtn">Предложить график</button>
-        </div>
+      <div class="modeseg" role="group" aria-label="Режим">
+        <button id="mWish">Дано</button>
+        <button id="mAssign" class="assign">Утверждён</button>
+      </div>
+      <div class="tacts">
+        <button class="btn" id="suggestBtn">Автоподбор</button>
+        <button class="btn" id="selBtn">Выбрать</button>
+        <button class="btn primary" id="approveBtn">Утвердить неделю</button>
       </div>
       <div class="modehint" id="modeHint"></div>
       <div class="freebar" id="freeBar" hidden></div>
@@ -452,10 +492,10 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 
     <div class="resetrow" id="resetRow">
       <span class="rl">Сбросить неделю</span>
-      <div class="rb"><button class="btn" data-reset="shifts">Смены</button><button class="btn" data-reset="wish">«Дано»</button><button class="btn danger" data-reset="all">Всё</button></div>
+      <div class="rb"><button class="btn" data-reset="shifts">Смены</button><button class="btn" data-reset="wish" id="resetWishBtn">«Дано»</button><button class="btn danger" data-reset="all">Всё</button></div>
     </div>
 
-    <section style="display:flex;flex-direction:column;gap:10px">
+    <section id="loadSec" style="display:flex;flex-direction:column;gap:10px">
       <div class="section-h"><h2>Нагрузка за неделю</h2><span class="hint">Красная метка — пересечение смен, жёлтая — мало отдыха между сменами</span></div>
       <div class="load" id="load"></div>
     </section>
@@ -506,7 +546,7 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
   let weekStart=mondayOf(new Date());
   let canWrite=false, scrolledToday=false, reqSeq=0, writing=0;
   let fClub="all", fAdmin=null, view="table", mode="wish", focusDay=null;
-  let selMode=false; const sel=new Set(); // "dayIdx|adminId"
+  let selMode=false, approved=false; const sel=new Set(); // "dayIdx|adminId"
   try{const v=JSON.parse(localStorage.getItem("sr-filters")||"{}");if(v.club)fClub=v.club;if(v.admin)fAdmin=v.admin;if(v.view)view=v.view;if(v.mode)mode=v.mode}catch(_){}
   function saveF(){try{localStorage.setItem("sr-filters",JSON.stringify({club:fClub,admin:fAdmin,view,mode}))}catch(_){}}
 
@@ -551,15 +591,15 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
     return v;
   }
   function lsave(v){try{localStorage.setItem("sr-demo",JSON.stringify(v))}catch(_){}}
-  function lweek(db,w){const x=db.weeks[w]||{};return{cells:x.cells||{},wish:x.wish||{},auto:x.auto||{}}}
+  function lweek(db,w){const x=db.weeks[w]||{};return{cells:x.cells||{},wish:x.wish||{},auto:x.auto||{},approved:!!x.approved}}
   async function localApi(action,p){
     const db=ldb();p=p||{};
-    if(action==="state"){const w=lweek(db,p.week);return{team:db.team,cells:w.cells,wish:w.wish,auto:w.auto,canEdit:true,setup:false,me:{id:0}}}
+    if(action==="state"){const w=lweek(db,p.week);return{team:db.team,cells:w.cells,wish:w.wish,auto:w.auto,approved:w.approved,canEdit:true,setup:false,me:{id:0}}}
     if(action==="setTeam"){db.team=p.team;lsave(db);return{team:db.team}}
     const w=lweek(db,p.week);
     if(action==="setCell"){if(p.admin)w.cells[p.key]=p.admin;else delete w.cells[p.key];delete w.auto[p.key]}
     else if(action==="setWish"){if(p.value)w.wish[p.key]=p.value;else delete w.wish[p.key]}
-    else if(action==="setWeek"){w.cells=p.cells||{};w.auto=p.auto||{};if(p.wish)w.wish=p.wish}
+    else if(action==="setWeek"){w.cells=p.cells||{};w.auto=p.auto||{};if(p.wish)w.wish=p.wish;if("approved" in p)w.approved=!!p.approved}
     else throw new Error("Неизвестное действие");
     db.weeks[p.week]=w;lsave(db);return w;
   }
@@ -588,11 +628,13 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
   function mark(r,k,lvl,txt){if(!r[k]||r[k].lvl!=="bad")r[k]={lvl,txt}}
   // conflict of putting adminId into (dayIdx,slot) against src, ignoring that same cell and same-day slots of that admin listed in ignore
   function conflictFor(adminId,dayIdx,slot,src,ignoreSameDay){
-    const iv=interval(dayIdx,slot);let lvl=null,txt="";
+    const iv=interval(dayIdx,slot);let lvl=null,txt="",same=false;
     days().forEach((d,i)=>team.slots.forEach(s=>{
       if(i===dayIdx&&s.id===slot.id)return;
       if(ignoreSameDay&&i===dayIdx)return;
       if(get(d,s.id,src)!==adminId)return;
+      if(same)return;
+      if(i===dayIdx){same=true;lvl="bad";txt=`Уже в этот день: ${(SHORT_MOB[s.short]||s.short).toLowerCase()} ${s.label.toLowerCase()}`;return}
       const o=interval(i,s);
       if(o[0]<iv[1]&&iv[0]<o[1]){lvl="bad";txt=`Занят: ${DOW[i]}, ${(SHORT_MOB[s.short]||s.short).toLowerCase()} ${s.label.toLowerCase()}`}
       else if(lvl!=="bad"&&Math.min(Math.abs(iv[0]-o[1]),Math.abs(o[0]-iv[1]))<REST_MIN){lvl="warn";txt=`Мало отдыха: ${DOW[i]}, ${s.label.toLowerCase()}`}
@@ -623,13 +665,14 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
     const total=7*team.slots.length;let filled=0;days().forEach(d=>team.slots.forEach(s=>{if(admin(get(d,s.id)))filled++}));
     const left=Math.round((dl-today)/864e5);
     let cls="",st="";
-    if(filled===total&&total){cls="ok";st="Готово"}
+    if(approved){cls="ok";st="Утверждено ✓"}
+    else if(filled===total&&total){cls="ok";st="Готово к утверждению"}
     else if(left<0){cls="bad";st=today>=weekStart?"Неделя идёт":"Срок прошёл"}
     else if(left===0){cls="bad";st="Срок сегодня"}
     else if(left<=2){cls="warn";st=left===1?"Остался 1 день":"Осталось "+left+" дня"}
     else st="Осталось "+left+" "+plural(left,"день","дня","дней");
     el.className="deadline "+cls;el.hidden=!loaded;
-    el.innerHTML=`<div><b>Составить до сб, ${dl.getDate()} ${MON[dl.getMonth()]}</b><br><span style="color:var(--muted);font-size:12.5px">Закрыто ${filled} из ${total} смен</span></div><span class="dl-s">${st}</span>`;
+    el.innerHTML=`<div><b>${approved?"График утверждён":"Составить до сб, "+dl.getDate()+" "+MON[dl.getMonth()]}</b><br><span style="color:var(--muted);font-size:12.5px">Закрыто ${filled} из ${total} смен</span></div><span class="dl-s">${st}</span>`;
   }
 
   // ---------- render ----------
@@ -649,26 +692,34 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
     $("viewTable").hidden=v!=="table";$("viewShifts").hidden=v!=="shifts";
     renderDeadline();
     if(v==="table")renderTable();else renderShifts();
-    renderLoad();
+    $("loadSec").hidden=v==="table";
+    if(v!=="table")renderLoad();
     renderSel();
     const ro=!canWrite;
     ["copyPrev","clearWk","team","resetRow"].forEach(id=>$(id).hidden=ro);
+    $("resetWishBtn").hidden=approved;
     document.body.classList.toggle("ro",ro);
   }
 
   function renderTable(){
     const ds=days(), today=iso(new Date()), st=weekStats(), flags=analyze();
+    if(approved&&mode==="wish")mode="assign";
     $("mWish").classList.toggle("on",mode==="wish");$("mAssign").classList.toggle("on",mode==="assign");
-    $("modeHint").textContent=selMode?"Выберите клетки. Тап по имени выделит всю неделю человека, тап по дню — весь день.":mode==="wish"?"Отмечайте, кто когда может: тап по клетке → смена, «любая» или «не может».":"Назначайте смены: тап по клетке. Если в «дано» указана конкретная смена и она свободна, назначится сразу.";
-    const nAuto=Object.keys(auto).filter(k=>cells[k]).length;
-    $("autoChip").hidden=!nAuto||selMode;$("autoChip").textContent="Утвердить автоподбор · "+nAuto;
+    $("mWish").disabled=approved;$("mWish").title=approved?"Неделя утверждена — «дано» больше не нужно":"";
+    $("modeHint").textContent=selMode?"Выберите клетки. Тап по имени выделит всю неделю человека, тап по дню — весь день.":approved?"Неделя утверждена. Замены — тапом по клетке.":mode==="wish"?"Отметьте, кто когда может. Пустая клетка = любая смена.":"Ставьте смены тапом. Когда неделя готова — «Утвердить неделю».";
+    const total=7*team.slots.length;let filled=0;ds.forEach(d=>team.slots.forEach(s=>{if(admin(get(d,s.id)))filled++}));
+    $("suggestBtn").hidden=approved;
+    $("approveBtn").textContent=approved?"В черновик":"Утвердить неделю";
+    $("approveBtn").className=approved?"btn":"btn primary";
+    $("selBtn").textContent=selMode?"Готово":"Выбрать";
+    document.querySelector(".tacts").style.gridTemplateColumns=approved?"1fr 1fr":"";
 
     let h=`<div class="t-corner c0"></div>`;
     ds.forEach((d,i)=>{h+=`<button class="t-h${iso(d)===today?" today":""}${i>4?" wk":""}${focusDay===i&&!selMode?" focus":""}" data-fd="${i}" aria-label="${selMode?"Выбрать весь день":"Кто свободен"}: ${DOW_FULL[i]}"><b>${DOW[i]}</b><span>${String(d.getDate()).padStart(2,"0")}</span></button>`});
     h+=`<div class="t-th">Итог</div>`;
     const freeIds=focusDay!=null&&!selMode?new Set(freeOnDay(focusDay).map(a=>a.id)):null;
     team.admins.forEach(a=>{
-      const S=st[a.id], low=S.n<=1;
+      const S=st[a.id], low=S.n<=1&&filled>=total/2;
       h+=`<button class="t-name c0${low?" low":""}" data-row="${a.id}" aria-label="${selMode?"Выбрать всю неделю: ":""}${esc(a.name)}"><span class="sw" style="background:${color(a.id)}"></span><span class="nm">${esc(a.name)}</span></button>`;
       ds.forEach((d,i)=>{
         const s=adminDaySlot(d,a.id), w=wishOf(d,a.id), wr=wishRaw(d,a.id), k=s?key(d,s.id):null;
@@ -683,7 +734,8 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
           const f=flags[k];
           if(w==="no"||f&&f.lvl==="bad")dot='<span class="dotbad"></span>';
           else if(f&&f.lvl==="warn"||(w&&w!=="any"&&w!==s.id))dot='<span class="dotwarn"></span>';
-        }else inner=`<span class="lbl w-${w}${wr?"":" def"}">${WISH_TAG[w]||"?"}</span>`;
+        }else inner=approved?`<span class="lbl"></span>`:`<span class="lbl w-${w}${wr?"":" def"}">${WISH_TAG[w]||"?"}</span>`;
+        if(s&&team.slots.filter(x=>get(d,x.id)===a.id).length>1)dot='<span class="dotbad"></span>';
         const desc=`${esc(a.name)}, ${DOW_FULL[i]}: ${s?slotName(s):"нет смены"}${", дано: "+(w==="any"?"любая":w==="no"?"не может":slotName(slotById(w)||{short:w,label:""}))}`;
         h+=`<button class="${cls.join(" ")}" data-d="${i}" data-a="${a.id}" aria-label="${desc}">${inner}${dot}</button>`;
       });
@@ -705,6 +757,7 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
       $("fbClose").onclick=()=>{focusDay=null;render()};
     }else fb.hidden=true;
 
+    if(approved){$("legend").innerHTML=team.slots.map(s=>`<span><i class="lbl as-${s.id}" style="border-radius:4px">${slotTag(s)}</i>${esc(slotName(s))}</span>`).join("");return}
     $("legend").innerHTML=team.slots.map(s=>`<span><i class="lbl as-${s.id}" style="border-radius:4px">${slotTag(s)}</i>${esc(slotName(s))}</span>`).join("")+
       `<span><i class="lbl as-bol-d auto">Б·Д</i>пунктир — предложено автоподбором</span><span><i class="lbl w-any def">✓</i>без отметки = любая</span><span><i class="lbl w-any">✓</i>любая (отмечено)</span><span><i class="lbl w-no">✕</i>не может</span><span><i class="lbl w-bol-d">Б·Д</i>светлая — «дано»</span>`;
   }
@@ -803,7 +856,7 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
       else if(hn){r="Сейчас: "+hn+" — заменить"}
       else if(w===s.id){r="По «дано»";rc="wish"}
       else r="Свободно";
-      return `<button class="slotopt${curS&&curS.id===s.id?" sel":""}" data-s="${s.id}"><span class="l"><i class="lbl as-${s.id}">${slotTag(s)}</i><span class="t"><b>${esc(slotName(s))}</b><span>${esc(s.from)}–${esc(s.to)}</span></span></span><span class="r ${rc}">${esc(r)}</span></button>`;
+      return `<button class="slotopt${curS&&curS.id===s.id?" sel":""}" data-s="${s.id}"${c.lvl?" disabled":""}><span class="l"><i class="lbl as-${s.id}">${slotTag(s)}</i><span class="t"><b>${esc(slotName(s))}</b><span>${esc(s.from)}–${esc(s.to)}</span></span></span><span class="r ${rc}">${esc(r)}</span></button>`;
     }).join("");
     const wtxt=w==="any"?(wishRaw(d,aId)?"любая":"любая (без отметки)"):w==="no"?"не может":slotName(slotById(w)||{short:w,label:""});
     openModal(head("Назначить",esc(a.name),`${DOW_FULL[dayIdx]}, ${d.getDate()} ${MON[d.getMonth()]} · дано: ${esc(wtxt)}`)+
@@ -841,7 +894,7 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
     const opts=list.map(a=>{const b=busyInfo(a.id,dayIdx,s);const w=wishRaw(d,a.id);
       const meta=b.lvl?esc(b.txt):w==="no"?"Не может":w===slotId?"По «дано» · "+fmtH(weekHours(a.id))+" ч":w==="any"?"Может · "+fmtH(weekHours(a.id))+" ч":fmtH(weekHours(a.id))+" ч";
       const mc=b.lvl||(w==="no"?"bad":w===slotId||w==="any"?"ok":"");
-      return `<button class="opt${a.id===cur?" sel":""}" data-a="${a.id}"><span class="who"><span class="sw" style="background:${color(a.id)}"></span><span class="nm">${esc(a.name)}</span></span><span class="meta ${mc}" ${mc==="ok"?'style="color:var(--ok)"':""}>${meta}</span></button>`}).join("");
+      return `<button class="opt${a.id===cur?" sel":""}" data-a="${a.id}"${b.lvl&&a.id!==cur?" disabled":""}><span class="who"><span class="sw" style="background:${color(a.id)}"></span><span class="nm">${esc(a.name)}</span></span><span class="meta ${mc}" ${mc==="ok"?'style="color:var(--ok)"':""}>${meta}</span></button>`}).join("");
     openModal(head(esc(s.club),`${DOW_FULL[dayIdx]}, ${d.getDate()} ${MON[d.getMonth()]}`,`${esc(s.label)} · ${esc(s.from)}–${esc(s.to)}`,isChe(s)?"che":"")+
       `<div class="opts">${opts}</div>
       ${wasEmpty&&left>1?`<div class="remain">Пустых смен на неделе: ${left}. После выбора откроется следующая.</div>`:""}
@@ -858,12 +911,13 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
   // ---------- multi-select ----------
   function renderSel(){
     const on=selMode&&view==="table"&&canWrite;
-    $("selBtn").textContent=selMode?"Готово":"Выбрать несколько";
+    $("selBtn").textContent=selMode?"Готово":"Выбрать";
     $("selBtn").classList.toggle("on",selMode);
     $("selBar").hidden=!on;
     document.body.classList.toggle("selmode",on);
     $("selCount").textContent=sel.size?"Выбрано: "+sel.size+" "+plural(sel.size,"клетка","клетки","клеток"):"Тапайте клетки, имена или дни";
     $("selWish").disabled=!sel.size;$("selAssign").disabled=!sel.size;$("selClear").hidden=!sel.size;
+    $("selWish").hidden=approved;document.querySelector(".sb-act").style.gridTemplateColumns=approved?"1fr":"";
   }
   function selList(){return[...sel].map(k=>{const [i,a]=k.split("|");return{i:+i,a}}).filter(x=>admin(x.a)).sort((x,y)=>x.i-y.i)}
   function openBulkWish(){
@@ -895,7 +949,8 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
         const s=slotById(slotId), k=key(d,slotId), holder=work[k];
         if(holder&&holder!==a&&admin(holder)){skip.push(`${DOW[i]}: смена уже у ${admin(holder).name}`);return}
         const prev={};team.slots.forEach(x=>{const kk=key(d,x.id);if(x.id!==slotId&&work[kk]===a){prev[kk]=a;delete work[kk]}});
-        if(conflictFor(a,i,s,work,true).lvl==="bad"){Object.assign(work,prev);skip.push(`${DOW[i]}, ${admin(a).name}: пересечение`);return}
+        const cf=conflictFor(a,i,s,work,true);
+        if(cf.lvl){Object.assign(work,prev);skip.push(`${DOW[i]}, ${admin(a).name}: ${cf.lvl==="bad"?"пересечение":"мало отдыха между сменами"}`);return}
         Object.keys(prev).forEach(kk=>delete na[kk]);
         work[k]=a;delete na[k];ok++;
       });
@@ -941,23 +996,43 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
     if(!canWrite)return;
     const {work,added,holes}=computeSuggestion();
     const keys=Object.keys(added).sort();
-    const rows=keys.map(k=>{const [dt,sid]=[k.slice(0,10),k.slice(11)];const i=days().findIndex(d=>iso(d)===dt);const s=slotById(sid);
-      return `<div class="sg-row"><div>${esc(admin(added[k]).name)} <span style="color:var(--muted)">— ${esc(slotName(s))}</span></div><span>${DOW[i]} ${ddmm(days()[i])}</span></div>`}).join("");
+    const ds=days(), holeKeys=new Set(holes.map(h=>key(h.d,h.s.id)));
+    const nOld=Object.keys(cells).filter(k=>admin(cells[k])&&ds.some(d=>k.startsWith(iso(d)))).length;
+    const grid=ds.map((d,i)=>`<div class="sg-day${i>4?" wk":""}"><div class="sg-dh"><b>${DOW[i]}</b><span>${ddmm(d)}</span></div>${team.slots.map(s=>{
+      const k=key(d,s.id), a=work[k]&&admin(work[k]);
+      const st=holeKeys.has(k)?"hole":added[k]?"new":"old";
+      return `<div class="sg-s st-${st}"><i class="lbl as-${s.id}">${slotTag(s)}</i><span class="nm">${a?esc(a.name):"не закрыто"}</span></div>`}).join("")}</div>`).join("");
     const holesHtml=holes.length?`<div class="sg-holes"><b>Не закрыто: ${holes.length}</b>${holes.map(h=>`<div>${DOW[h.i]} ${ddmm(h.d)}, ${esc(slotName(h.s))}<br><span>${h.free.length?"Можно спросить: "+h.free.map(a=>esc(a.name)).join(", "):"Свободных нет"}</span></div>`).join("")}</div>`:"";
-    const st=weekStats(work);
-    const loadLine=team.admins.map(a=>`${esc(a.name)} ${fmtH(st[a.id].h)}`).join(" · ");
+    const st=weekStats(work), maxH=Math.max(1,...team.admins.map(a=>st[a.id].h));
+    const loadHtml=team.admins.map(a=>`<div class="sg-p"><span class="nm">${esc(a.name)}</span><span class="h">${fmtH(st[a.id].h)} ч</span><i style="width:${(st[a.id].h/maxH*100).toFixed(0)}%"></i></div>`).join("");
     openModal(head("Автоподбор","Предложение на неделю","Уже назначенное не меняется")+
-      `<div class="sg-sum">${keys.length?`Предлагаю закрыть <b>${keys.length}</b> ${plural(keys.length,"смену","смены","смен")} по «дано».`:"По отметкам «дано» больше некого поставить."}</div>
+      `<div class="sg-tiles"><div class="tl new"><b>+${keys.length}</b><span>новых</span></div><div class="tl old"><b>${nOld}</b><span>уже было</span></div><div class="tl ${holes.length?"hole":"okk"}"><b>${holes.length}</b><span>не закрыто</span></div></div>
+      <div class="sg-legend"><span><i class="k new"></i>новое</span><span><i class="k old"></i>уже было</span><span><i class="k hole"></i>не закрыто</span></div>
+      <div class="sg-grid">${grid}</div>
       ${holesHtml}
-      ${keys.length?`<div class="sg-list">${rows}</div><div class="remain">Часы после подбора: ${loadLine}</div>`:""}
+      <div class="sg-sub">Часы за неделю после подбора</div><div class="sg-load">${loadHtml}</div>
       <div class="sh-foot"><button class="btn" data-close>${keys.length?"Отмена":"Закрыть"}</button>${keys.length?'<button class="btn primary" id="sgApply">Применить</button>':""}</div>`,true);
     const ap=$("sgApply");if(ap)ap.addEventListener("click",async()=>{
       const snap=snapshot();close();
       const na=Object.assign({},auto);keys.forEach(k=>na[k]=true);
-      if(await setWeek(work,na)){haptic.ok();toast(`Предложено смен: ${keys.length} — проверьте и утвердите`,"Отменить",()=>restore(snap))}
+      if(await setWeek(work,na)){haptic.ok();toast(`Добавлено смен: ${keys.length} — проверьте и утвердите неделю`,"Отменить",()=>restore(snap))}
     });
   }
-  function approveAuto(){const snap=snapshot();setWeek(cells,{}).then(ok=>{if(ok)toast("Смены утверждены","Отменить",()=>restore(snap))})}
+  function approveWeek(){
+    if(approved){
+      confirmBox("Вернуть в черновик?","Неделя снова станет черновиком. Смены останутся, «дано» можно будет отмечать заново.","Вернуть",async()=>{const snap=snapshot();if(await setWeek(cells,auto,undefined,false))toast("Неделя в черновике","Отменить",()=>restore(snap))});
+      return;
+    }
+    const total=7*team.slots.length;let filled=0;days().forEach(d=>team.slots.forEach(s=>{if(admin(get(d,s.id)))filled++}));
+    const holes=total-filled, bad=Object.values(analyze()).filter(f=>f.lvl==="bad").length;
+    let txt="«Дано» этой недели будет очищено, пунктир автоподбора снимется. Дальше все замены — в режиме «Утверждён».";
+    if(holes)txt="Не закрыто смен: "+holes+". "+txt;
+    if(bad)txt="Есть пересечения смен: "+bad+". "+txt;
+    confirmBox("Утвердить неделю?",txt,"Утвердить",async()=>{
+      const snap=snapshot();
+      if(await setWeek(cells,{},{},true)){mode="assign";saveF();haptic.ok();render();toast("График утверждён","Отменить",()=>restore(snap))}
+    });
+  }
 
   // ---------- menu / team / export ----------
   function openMenu(){
@@ -969,7 +1044,9 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
       !ro&&["team","Команда и смены","Имена администраторов и время смен"],
       !isCurrentWeek()&&["thisWeek","К текущей неделе",""],
       !ro&&["clearWk","Сбросить смены","Удалить назначения, «дано» останется","danger"],
-      !ro&&["clearWish","Сбросить «дано»","Все снова «любая», смены останутся","danger"],
+      !ro&&!approved&&["approve","Утвердить неделю","Очистит «дано», дальше только замены"],
+      !ro&&approved&&["approve","Вернуть в черновик","Снять утверждение недели"],
+      !ro&&!approved&&["clearWish","Сбросить «дано»","Все снова «любая», смены останутся","danger"],
       !ro&&["clearAll","Сбросить всю неделю","Удалить и смены, и «дано»","danger"]
     ].filter(Boolean);
     openModal(head("Действия",esc($("wkTitle").textContent))+
@@ -1022,8 +1099,8 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
   function fail(e){haptic.err();toast(e&&e.message?e.message:"Не удалось сохранить");if(e&&e.status===403){canWrite=false;render()}setTimeout(()=>load(true),0)}
 
   // ---------- data ----------
-  function snapshot(){return{cells:Object.assign({},cells),auto:Object.assign({},auto),wish:Object.assign({},wish)}}
-  function restore(s){setWeek(s.cells,s.auto,s.wish)}
+  function snapshot(){return{cells:Object.assign({},cells),auto:Object.assign({},auto),wish:Object.assign({},wish),approved}}
+  function restore(s){setWeek(s.cells,s.auto,s.wish,s.approved)}
   async function setCell(k,adminId){
     cells={...cells};if(adminId)cells[k]=adminId;else delete cells[k];
     if(auto[k]){auto={...auto};delete auto[k]}
@@ -1035,9 +1112,9 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
     wish={...wish};if(v)wish[k]=v;else delete wish[k];render();
     writing++;try{await api("setWish",{week:iso(weekStart),key:k,value:v||null})}catch(e){fail(e)}finally{writing--}
   }
-  async function setWeek(map,autoMap,wishMap){
-    cells={...map};auto={...(autoMap||{})};if(wishMap)wish={...wishMap};render();writing++;
-    const body={week:iso(weekStart),cells:map,auto:autoMap||{}};if(wishMap)body.wish=wishMap;
+  async function setWeek(map,autoMap,wishMap,appr){
+    cells={...map};auto={...(autoMap||{})};if(wishMap)wish={...wishMap};if(appr!==undefined)approved=!!appr;render();writing++;
+    const body={week:iso(weekStart),cells:map,auto:autoMap||{}};if(wishMap)body.wish=wishMap;if(appr!==undefined)body.approved=!!appr;
     try{await api("setWeek",body);return true}
     catch(e){fail(e);return false}
     finally{writing--}
@@ -1058,11 +1135,11 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 
   async function load(silent){
     const seq=++reqSeq, wk=iso(weekStart);
-    if(!silent){loaded=false;cells={};wish={};auto={};render()}
+    if(!silent){loaded=false;cells={};wish={};auto={};approved=false;render()}
     try{
       const r=await api("state",{week:wk});
       if(seq!==reqSeq||writing)return;
-      team=r.team;cells=r.cells||{};wish=r.wish||{};auto=r.auto||{};canWrite=!!r.canEdit;loaded=true;
+      team=r.team;cells=r.cells||{};wish=r.wish||{};auto=r.auto||{};approved=!!r.approved;canWrite=!!r.canEdit;loaded=true;
       status(!LOCAL,LOCAL?"Демо · данные только на этом устройстве":r.canEdit?"Режим руководителя":"Только просмотр");
       const b=$("setupBanner");
       if(r.setup){b.hidden=false;b.innerHTML=`<b>Настройка: впишите свой Telegram ID в config.php</b><span>Ваш ID: <code>${esc(r.me.id)}</code>. Добавьте его в OWNER_IDS — после этого график сможете менять только вы.</span>`}
@@ -1092,6 +1169,7 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 
   const ACT={
     suggest:openSuggest,
+    approve:approveWeek,
     copyPrev,
     exportTg:exportText,
     team:openTeam,
@@ -1112,7 +1190,7 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
     if(r){if(selMode){haptic.tap();toggleGroup([0,1,2,3,4,5,6].map(i=>i+"|"+r.dataset.row))}return}
     const c=e.target.closest(".t-c");if(!c||!canWrite)return;
     if(selMode){haptic.tap();const k=c.dataset.d+"|"+c.dataset.a;sel.has(k)?sel.delete(k):sel.add(k);render();return}
-    if(mode==="wish")openWish(+c.dataset.d,c.dataset.a);else tableAssign(+c.dataset.d,c.dataset.a);
+    if(mode==="wish"&&!approved)openWish(+c.dataset.d,c.dataset.a);else tableAssign(+c.dataset.d,c.dataset.a);
   });
   function toggleGroup(keys){const all=keys.every(k=>sel.has(k));keys.forEach(k=>all?sel.delete(k):sel.add(k));render()}
   $("selBtn").addEventListener("click",()=>{haptic.tap();selMode=!selMode;sel.clear();focusDay=null;render()});
@@ -1123,7 +1201,7 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
   $("mAssign").addEventListener("click",()=>{mode="assign";saveF();haptic.tap();render()});
   $("suggestBtn").addEventListener("click",openSuggest);
   $("resetRow").addEventListener("click",e=>{const b=e.target.closest("[data-reset]");if(b){haptic.tap();askReset(b.dataset.reset)}});
-  $("autoChip").addEventListener("click",approveAuto);
+  $("approveBtn").addEventListener("click",approveWeek);
   $("tabTable").addEventListener("click",()=>{view="table";saveF();haptic.tap();render()});
   $("tabShifts").addEventListener("click",()=>{view="shifts";saveF();haptic.tap();render()});
   $("prev").addEventListener("click",()=>goWeek(-1));
