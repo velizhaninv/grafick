@@ -15,20 +15,20 @@ html,body{margin:0}
 
 /* Layout: mobile-first. Sticky week bar on top; each day is a card with one cell per shift; picker is a bottom sheet that walks through empty slots. Desktop widens into a 7-column pit-wall board. Dark single theme by choice (brand). */
 :root{
-  --bg:#0f1011;
-  --panel:#17181a;
-  --panel-2:#1e2023;
-  --line:#2a2c30;
-  --fg:#ecebe8;
-  --muted:#8d8b86;
-  --dim:#5c5b58;
+  --bg:#1e2023;
+  --panel:#27292d;
+  --panel-2:#303338;
+  --line:#3b3e44;
+  --fg:#f2f1ee;
+  --muted:#a9a7a2;
+  --dim:#7c7a75;
   --accent:#f39200;
   --accent-soft:rgba(243,146,0,.12);
   --warn:#e0a83a;
   --bad:#e5533d;
   --ok:#5fae7c;
-  --che-bg:#182026;
-  --che-hover:#1f2a32;
+  --che-bg:#243039;
+  --che-hover:#2b3a45;
   --che-line:#6f8ea3;
   --f-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
@@ -137,7 +137,7 @@ body.ro .cell.empty .plus{display:none}
 .lrow.on{border-color:var(--accent)}
 
 /* sheets: bottom sheet on phones, dialog on desktop */
-.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.scrim{position:fixed;inset:0;background:rgba(10,11,12,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--panel);border:1px solid var(--line);border-bottom:none;border-radius:18px 18px 0 0;width:100%;max-height:88%;overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px);animation:up .22s ease-out}
 @keyframes up{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
 .grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 0;flex:none}
@@ -305,7 +305,8 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
 .lbl.w-bol-d{background:rgba(243,146,0,.13);color:#f2b45e;box-shadow:inset 0 0 0 1px rgba(243,146,0,.35)}
 .lbl.w-bol-n{background:rgba(168,100,15,.2);color:#d9a35a;box-shadow:inset 0 0 0 1px rgba(168,100,15,.5)}
 .lbl.w-che-d{background:rgba(125,157,177,.14);color:#a6c0d0;box-shadow:inset 0 0 0 1px rgba(125,157,177,.4)}
-.lbl.w-any{background:rgba(95,174,124,.13);color:#8fcca4;box-shadow:inset 0 0 0 1px rgba(95,174,124,.4)}
+.lbl.w-any{background:rgba(95,174,124,.15);color:#9ad6ae;box-shadow:inset 0 0 0 1px rgba(95,174,124,.45)}
+.lbl.w-any.def{background:transparent;color:rgba(154,214,174,.45);box-shadow:inset 0 0 0 1px rgba(95,174,124,.18)}
 .lbl.w-no{background:rgba(229,83,61,.1);color:#e5533d;box-shadow:inset 0 0 0 1px rgba(229,83,61,.35)}
 .lbl.auto{outline:1.5px dashed rgba(255,255,255,.85);outline-offset:-4px}
 .t-c .dotbad{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--bad);box-shadow:0 0 0 2px var(--panel)}
@@ -354,6 +355,10 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
 .sg-holes{margin:8px 18px 0;padding:10px 12px;border-radius:10px;border:1px solid rgba(229,83,61,.45);font-size:13px;display:flex;flex-direction:column;gap:6px}
 .sg-holes b{color:var(--bad);font-weight:600}
 .sg-holes span{color:var(--muted)}
+.resetrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.resetrow .rl{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.resetrow .rb{display:flex;gap:6px}
+.resetrow .btn{height:34px;padding:0 12px;background:var(--bg)}
 .toast{display:flex;align-items:center;gap:14px;width:max-content;text-align:left}
 .toast button{background:none;border:none;color:var(--accent);font-weight:700;cursor:pointer;padding:0;font-size:14px}
 @media (max-width:560px){.t-name .sw{display:none}}
@@ -424,6 +429,11 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
       <div class="swipehint">Листайте недели свайпом влево и вправо</div>
     </section>
 
+    <div class="resetrow" id="resetRow">
+      <span class="rl">Сбросить неделю</span>
+      <div class="rb"><button class="btn" data-reset="shifts">Смены</button><button class="btn" data-reset="wish">«Дано»</button><button class="btn danger" data-reset="all">Всё</button></div>
+    </div>
+
     <section style="display:flex;flex-direction:column;gap:10px">
       <div class="section-h"><h2>Нагрузка за неделю</h2><span class="hint">Красная метка — пересечение смен, жёлтая — мало отдыха между сменами</span></div>
       <div class="load" id="load"></div>
@@ -449,7 +459,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
   const INIT=tg?tg.initData:"";
   // Without a PHP server (GitHub Pages, local file) data lives on this device only.
   const LOCAL=/github\.io$/.test(location.hostname)||location.protocol==="file:";
-  if(tg){try{tg.ready();tg.expand();tg.setHeaderColor("#0f1011");tg.setBackgroundColor("#0f1011");if(tg.setBottomBarColor)tg.setBottomBarColor("#0f1011");if(tg.disableVerticalSwipes)tg.disableVerticalSwipes()}catch(_){}}
+  if(tg){try{tg.ready();tg.expand();tg.setHeaderColor("#1e2023");tg.setBackgroundColor("#1e2023");if(tg.setBottomBarColor)tg.setBottomBarColor("#1e2023");if(tg.disableVerticalSwipes)tg.disableVerticalSwipes()}catch(_){}}
   const haptic={
     tap(){try{tg&&tg.HapticFeedback.selectionChanged()}catch(_){}},
     ok(){try{tg&&tg.HapticFeedback.notificationOccurred("success")}catch(_){}},
@@ -494,7 +504,8 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
   function isCurrentWeek(){return iso(weekStart)===iso(mondayOf(new Date()))}
   function slotTag(s){return WISH_TAG[s.id]||((SHORT_MOB[s.short]||s.short).slice(0,1)+"·"+s.label.slice(0,1))}
   function slotName(s){return s.short+", "+s.label.toLowerCase()}
-  function wishOf(d,aId){return wish[wkey(d,aId)]||null}
+  function wishRaw(d,aId){return wish[wkey(d,aId)]||null}
+  function wishOf(d,aId){return wishRaw(d,aId)||"any"} // empty cell = can work any shift
   function adminDaySlot(d,aId,src){for(const s of team.slots)if(get(d,s.id,src)===aId)return s;return null}
 
   // ---------- storage ----------
@@ -519,7 +530,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
     const w=lweek(db,p.week);
     if(action==="setCell"){if(p.admin)w.cells[p.key]=p.admin;else delete w.cells[p.key];delete w.auto[p.key]}
     else if(action==="setWish"){if(p.value)w.wish[p.key]=p.value;else delete w.wish[p.key]}
-    else if(action==="setWeek"){w.cells=p.cells||{};w.auto=p.auto||{}}
+    else if(action==="setWeek"){w.cells=p.cells||{};w.auto=p.auto||{};if(p.wish)w.wish=p.wish}
     else throw new Error("Неизвестное действие");
     db.weeks[p.week]=w;lsave(db);return w;
   }
@@ -611,7 +622,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
     if(v==="table")renderTable();else renderShifts();
     renderLoad();
     const ro=!canWrite;
-    ["copyPrev","clearWk","team"].forEach(id=>$(id).hidden=ro);
+    ["copyPrev","clearWk","team","resetRow"].forEach(id=>$(id).hidden=ro);
     document.body.classList.toggle("ro",ro);
   }
 
@@ -630,7 +641,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
       const S=st[a.id], low=S.n<=1;
       h+=`<div class="t-name c0${low?" low":""}"><span class="sw" style="background:${color(a.id)}"></span><span class="nm">${esc(a.name)}</span></div>`;
       ds.forEach((d,i)=>{
-        const s=adminDaySlot(d,a.id), w=wishOf(d,a.id), k=s?key(d,s.id):null;
+        const s=adminDaySlot(d,a.id), w=wishOf(d,a.id), wr=wishRaw(d,a.id), k=s?key(d,s.id):null;
         const cls=["t-c"];if(iso(d)===today)cls.push("today");
         if(freeIds&&focusDay===i)cls.push(freeIds.has(a.id)?"free":"notfree");
         else if(freeIds)cls.push("notfree");
@@ -640,9 +651,8 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
           const f=flags[k];
           if(w==="no"||f&&f.lvl==="bad")dot='<span class="dotbad"></span>';
           else if(f&&f.lvl==="warn"||(w&&w!=="any"&&w!==s.id))dot='<span class="dotwarn"></span>';
-        }else if(w){inner=`<span class="lbl w-${w}">${WISH_TAG[w]||"?"}</span>`}
-        else inner=`<span class="lbl"></span>`;
-        const desc=`${esc(a.name)}, ${DOW_FULL[i]}: ${s?slotName(s):"нет смены"}${w?", дано: "+(w==="any"?"любая":w==="no"?"не может":slotName(slotById(w)||{short:w,label:""})):""}`;
+        }else inner=`<span class="lbl w-${w}${wr?"":" def"}">${WISH_TAG[w]||"?"}</span>`;
+        const desc=`${esc(a.name)}, ${DOW_FULL[i]}: ${s?slotName(s):"нет смены"}${", дано: "+(w==="any"?"любая":w==="no"?"не может":slotName(slotById(w)||{short:w,label:""}))}`;
         h+=`<button class="${cls.join(" ")}" data-d="${i}" data-a="${a.id}" aria-label="${desc}">${inner}${dot}</button>`;
       });
       h+=`<div class="t-tot${low?" low":""}"><b>${S.n}</b><span>${fmtH(S.h)} ч</span></div>`;
@@ -658,13 +668,13 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
       const d=ds[focusDay], free=freeOnDay(focusDay), holes=team.slots.filter(s=>!admin(get(d,s.id)));
       fb.hidden=false;
       fb.innerHTML=`<div class="fb-top"><b>${DOW_FULL[focusDay]}, ${d.getDate()} ${MON[d.getMonth()]}: свободны</b><button class="x" id="fbClose" aria-label="Закрыть">×</button></div>
-        <div class="names">${free.length?free.map(a=>esc(a.name)+(wishOf(d,a.id)?` <span style="color:var(--muted)">(${WISH_TAG[wishOf(d,a.id)]})</span>`:"")).join(", "):"Никого — все заняты или не могут"}</div>
+        <div class="names">${free.length?free.map(a=>esc(a.name)+(wishRaw(d,a.id)&&wishRaw(d,a.id)!=="any"?` <span style="color:var(--muted)">(${WISH_TAG[wishRaw(d,a.id)]})</span>`:"")).join(", "):"Никого — все заняты или не могут"}</div>
         <div class="holes">${holes.length?"Не закрыто: "+holes.map(s=>esc(slotName(s))).join(", "):"Все смены дня закрыты"}</div>`;
       $("fbClose").onclick=()=>{focusDay=null;render()};
     }else fb.hidden=true;
 
     $("legend").innerHTML=team.slots.map(s=>`<span><i class="lbl as-${s.id}" style="border-radius:4px">${slotTag(s)}</i>${esc(slotName(s))}</span>`).join("")+
-      `<span><i class="lbl w-any">✓</i>может, любая</span><span><i class="lbl w-no">✕</i>не может</span><span><i class="lbl w-bol-d">Б·Д</i>светлая — «дано»</span>`;
+      `<span><i class="lbl w-any def">✓</i>без отметки = любая</span><span><i class="lbl w-any">✓</i>любая (отмечено)</span><span><i class="lbl w-no">✕</i>не может</span><span><i class="lbl w-bol-d">Б·Д</i>светлая — «дано»</span>`;
   }
 
   function renderShifts(){
@@ -734,11 +744,11 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
 
   // --- table: wish sheet
   function openWish(dayIdx,aId){
-    const d=days()[dayIdx], a=admin(aId), cur=wishOf(d,aId);
-    const opts=team.slots.map(s=>[s.id,slotName(s),s.from+"–"+s.to]).concat([["any","Любая смена","Может выйти, неважно куда"],["no","Не может","Не ставить в этот день"]]);
+    const d=days()[dayIdx], a=admin(aId), cur=wishRaw(d,aId);
+    const opts=team.slots.map(s=>[s.id,slotName(s),s.from+"–"+s.to]).concat([["any","Любая смена","Так считается и без отметки"],["no","Не может","Не ставить в этот день"]]);
     openModal(head("Дано",esc(a.name),`${DOW_FULL[dayIdx]}, ${d.getDate()} ${MON[d.getMonth()]}`)+
       `<div class="wishgrid">${opts.map(([v,t,s],i)=>`<button class="wbtn${cur===v?" sel":""}${opts.length%2&&i===opts.length-1?" full":""}" data-v="${v}"><span class="tagl lbl w-${v}">${WISH_TAG[v]}</span><b>${esc(t)}</b><span>${esc(s)}</span></button>`).join("")}</div>
-      <div class="sh-foot">${cur?'<button class="btn" id="wClr">Очистить</button>':""}<button class="btn" data-close>Готово</button></div>`);
+      <div class="remain">Без отметки человек считается свободным на любую смену.</div><div class="sh-foot">${cur?'<button class="btn" id="wClr">Сбросить отметку</button>':""}<button class="btn" data-close>Готово</button></div>`);
     root.querySelectorAll(".wbtn").forEach(b=>b.addEventListener("click",()=>{haptic.tap();setWish(wkey(d,aId),b.dataset.v===cur?null:b.dataset.v);close()}));
     const c=$("wClr");if(c)c.addEventListener("click",()=>{setWish(wkey(d,aId),null);close()});
   }
@@ -763,7 +773,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
       else r="Свободно";
       return `<button class="slotopt${curS&&curS.id===s.id?" sel":""}" data-s="${s.id}"><span class="l"><i class="lbl as-${s.id}">${slotTag(s)}</i><span class="t"><b>${esc(slotName(s))}</b><span>${esc(s.from)}–${esc(s.to)}</span></span></span><span class="r ${rc}">${esc(r)}</span></button>`;
     }).join("");
-    const wtxt=w?(w==="any"?"может, любая":w==="no"?"не может":slotName(slotById(w)||{short:w,label:""})):"нет отметки";
+    const wtxt=w==="any"?(wishRaw(d,aId)?"любая":"любая (без отметки)"):w==="no"?"не может":slotName(slotById(w)||{short:w,label:""});
     openModal(head("Назначить",esc(a.name),`${DOW_FULL[dayIdx]}, ${d.getDate()} ${MON[d.getMonth()]} · дано: ${esc(wtxt)}`)+
       `<div class="opts">${rows}</div>
       <div class="sh-foot">${curS?'<button class="btn danger" id="aClr">Снять со смены</button>':""}<button class="btn" data-close>Готово</button></div>`);
@@ -794,9 +804,9 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
     haptic.tap();
     const d=days()[dayIdx], s=slotById(slotId), cur=get(d,slotId), wasEmpty=!admin(cur);
     const left=emptySlots().length;
-    const rank=a=>{const w=wishOf(d,a.id);return w===slotId?0:w==="any"?1:!w?2:w==="no"?4:3};
+    const rank=a=>{const w=wishOf(d,a.id);return w===slotId?0:w==="any"?1:w==="no"?4:3};
     const list=team.admins.slice().sort((x,y)=>rank(x)-rank(y));
-    const opts=list.map(a=>{const b=busyInfo(a.id,dayIdx,s);const w=wishOf(d,a.id);
+    const opts=list.map(a=>{const b=busyInfo(a.id,dayIdx,s);const w=wishRaw(d,a.id);
       const meta=b.lvl?esc(b.txt):w==="no"?"Не может":w===slotId?"По «дано» · "+fmtH(weekHours(a.id))+" ч":w==="any"?"Может · "+fmtH(weekHours(a.id))+" ч":fmtH(weekHours(a.id))+" ч";
       const mc=b.lvl||(w==="no"?"bad":w===slotId||w==="any"?"ok":"");
       return `<button class="opt${a.id===cur?" sel":""}" data-a="${a.id}"><span class="who"><span class="sw" style="background:${color(a.id)}"></span><span class="nm">${esc(a.name)}</span></span><span class="meta ${mc}" ${mc==="ok"?'style="color:var(--ok)"':""}>${meta}</span></button>`}).join("");
@@ -870,8 +880,9 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
       ["exportTg","Отправить график в чат","Текстом, в любой чат Telegram"],
       !ro&&["team","Команда и смены","Имена администраторов и время смен"],
       !isCurrentWeek()&&["thisWeek","К текущей неделе",""],
-      !ro&&["clearWish","Очистить «дано» недели","Удалить все отметки, смены останутся"],
-      !ro&&["clearWk","Очистить смены недели","Удалить все назначения, «дано» останется","danger"]
+      !ro&&["clearWk","Сбросить смены","Удалить назначения, «дано» останется","danger"],
+      !ro&&["clearWish","Сбросить «дано»","Все снова «любая», смены останутся","danger"],
+      !ro&&["clearAll","Сбросить всю неделю","Удалить и смены, и «дано»","danger"]
     ].filter(Boolean);
     openModal(head("Действия",esc($("wkTitle").textContent))+
       `<div class="menu">${items.map(([id,t,s,cl])=>`<button class="mi ${cl||""}" data-act="${id}"><b>${esc(t)}</b>${s?`<span>${esc(s)}</span>`:""}</button>`).join("")}</div>`);
@@ -923,8 +934,8 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
   function fail(e){haptic.err();toast(e&&e.message?e.message:"Не удалось сохранить");if(e&&e.status===403){canWrite=false;render()}setTimeout(()=>load(true),0)}
 
   // ---------- data ----------
-  function snapshot(){return{cells:Object.assign({},cells),auto:Object.assign({},auto)}}
-  function restore(s){setWeek(s.cells,s.auto)}
+  function snapshot(){return{cells:Object.assign({},cells),auto:Object.assign({},auto),wish:Object.assign({},wish)}}
+  function restore(s){setWeek(s.cells,s.auto,s.wish)}
   async function setCell(k,adminId){
     cells={...cells};if(adminId)cells[k]=adminId;else delete cells[k];
     if(auto[k]){auto={...auto};delete auto[k]}
@@ -936,16 +947,24 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
     wish={...wish};if(v)wish[k]=v;else delete wish[k];render();
     writing++;try{await api("setWish",{week:iso(weekStart),key:k,value:v||null})}catch(e){fail(e)}finally{writing--}
   }
-  async function setWeek(map,autoMap){
-    cells={...map};auto={...(autoMap||{})};render();writing++;
-    try{await api("setWeek",{week:iso(weekStart),cells:map,auto:autoMap||{}});return true}
+  async function setWeek(map,autoMap,wishMap){
+    cells={...map};auto={...(autoMap||{})};if(wishMap)wish={...wishMap};render();writing++;
+    const body={week:iso(weekStart),cells:map,auto:autoMap||{}};if(wishMap)body.wish=wishMap;
+    try{await api("setWeek",body);return true}
     catch(e){fail(e);return false}
     finally{writing--}
   }
-  async function clearWish(){
-    const keys=Object.keys(wish);if(!keys.length){toast("«Дано» на этой неделе пустое");return}
-    const old=wish;wish={};render();writing++;
-    try{for(const k of keys)await api("setWish",{week:iso(weekStart),key:k,value:null});toast("«Дано» очищено")}catch(e){wish=old;fail(e)}finally{writing--}
+  async function resetWeek(kind){
+    const snap=snapshot();
+    const c=kind==="wish"?cells:{}, a=kind==="wish"?auto:{}, w=kind==="shifts"?wish:{};
+    const msg={shifts:"Смены сброшены",wish:"«Дано» сброшено",all:"Неделя сброшена"}[kind];
+    if(await setWeek(c,a,w)){haptic.ok();toast(msg,"Отменить",()=>restore(snap))}
+  }
+  function askReset(kind){
+    const t={shifts:["Сбросить смены?","Все назначения этой недели будут удалены. Отметки «дано» останутся."],
+      wish:["Сбросить «дано»?","Все отметки этой недели будут удалены, все снова «любая». Смены останутся."],
+      all:["Сбросить всю неделю?","Будут удалены и смены, и отметки «дано»."]}[kind];
+    confirmBox(t[0],t[1],"Сбросить",()=>resetWeek(kind));
   }
   function status(ok,txt){$("sdot").className="dot "+(ok?"live":"off");$("stext").textContent=txt}
 
@@ -989,8 +1008,9 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
     exportTg:exportText,
     team:openTeam,
     thisWeek:()=>goWeek(0),
-    clearWish:()=>confirmBox("Очистить «дано»?","Все отметки этой недели будут удалены. Назначенные смены останутся.","Очистить",clearWish),
-    clearWk:()=>confirmBox("Очистить смены?","Все назначения этой недели будут удалены. Отметки «дано» останутся.","Очистить",async()=>{const snap=snapshot();if(await setWeek({},{}))toast("Смены очищены","Отменить",()=>restore(snap))})
+    clearWish:()=>askReset("wish"),
+    clearWk:()=>askReset("shifts"),
+    clearAll:()=>askReset("all")
   };
 
   // ---------- events ----------
@@ -1003,6 +1023,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
   $("mWish").addEventListener("click",()=>{mode="wish";saveF();haptic.tap();render()});
   $("mAssign").addEventListener("click",()=>{mode="assign";saveF();haptic.tap();render()});
   $("suggestBtn").addEventListener("click",openSuggest);
+  $("resetRow").addEventListener("click",e=>{const b=e.target.closest("[data-reset]");if(b){haptic.tap();askReset(b.dataset.reset)}});
   $("autoChip").addEventListener("click",approveAuto);
   $("tabTable").addEventListener("click",()=>{view="table";saveF();haptic.tap();render()});
   $("tabShifts").addEventListener("click",()=>{view="shifts";saveF();haptic.tap();render()});
