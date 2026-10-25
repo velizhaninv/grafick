@@ -241,7 +241,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
 .gate h2{margin:0;font-size:22px;font-weight:600}
 .gate p{margin:0;color:var(--muted);font-size:15px}
 
-:root{--s-bd:#f39200;--s-bn:#a8640f;--s-cd:#7d9db1}
+:root{--s-bd:#f39200;--s-bn:#8f7fd6;--s-cd:#7d9db1;--wk-bg:#2e2b26;--wk-line:#4a4439}
 .banner{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft);font-size:13.5px}
 .banner span{color:var(--muted)}
 code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding:1px 6px;border-radius:5px;user-select:all}
@@ -300,10 +300,10 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
 .t-c:active .lbl{filter:brightness(1.15)}
 .t-c.today{background:rgba(243,146,0,.04)}
 .lbl.as-bol-d{background:var(--s-bd);color:#151515}
-.lbl.as-bol-n{background:var(--s-bn);color:#fff6ea}
+.lbl.as-bol-n{background:var(--s-bn);color:#16122a}
 .lbl.as-che-d{background:var(--s-cd);color:#0f1418}
 .lbl.w-bol-d{background:rgba(243,146,0,.13);color:#f2b45e;box-shadow:inset 0 0 0 1px rgba(243,146,0,.35)}
-.lbl.w-bol-n{background:rgba(168,100,15,.2);color:#d9a35a;box-shadow:inset 0 0 0 1px rgba(168,100,15,.5)}
+.lbl.w-bol-n{background:rgba(143,127,214,.16);color:#b7abf0;box-shadow:inset 0 0 0 1px rgba(143,127,214,.45)}
 .lbl.w-che-d{background:rgba(125,157,177,.14);color:#a6c0d0;box-shadow:inset 0 0 0 1px rgba(125,157,177,.4)}
 .lbl.w-any{background:rgba(95,174,124,.15);color:#9ad6ae;box-shadow:inset 0 0 0 1px rgba(95,174,124,.45)}
 .lbl.w-any.def{background:transparent;color:rgba(154,214,174,.45);box-shadow:inset 0 0 0 1px rgba(95,174,124,.18)}
@@ -355,6 +355,26 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
 .sg-holes{margin:8px 18px 0;padding:10px 12px;border-radius:10px;border:1px solid rgba(229,83,61,.45);font-size:13px;display:flex;flex-direction:column;gap:6px}
 .sg-holes b{color:var(--bad);font-weight:600}
 .sg-holes span{color:var(--muted)}
+.t-name{border:none;border-bottom:1px solid var(--line);text-align:left;color:inherit;cursor:default}
+body.selmode .t-name{cursor:pointer}
+.t-c.wk,.t-h.wk{background:rgba(255,240,215,.035)}
+.t-h.wk b{color:var(--fg)}
+.t-c.sel{box-shadow:inset 0 0 0 2px var(--fg);background:rgba(242,241,238,.08)}
+.t-c.sel::after{content:"✓";position:absolute;top:2px;left:4px;font-size:10px;font-weight:700;color:var(--fg)}
+#selBtn.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.selbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -8px 24px rgba(0,0,0,.25);padding-bottom:env(safe-area-inset-bottom,0px)}
+.selbar .sb-in{max-width:1240px;margin:0 auto;padding:10px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px}
+.selbar .sb-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+.selbar .sb-top b{font-weight:600}
+.sb-clear{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13.5px;padding:4px 0}
+.selbar .sb-act{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.selbar .sb-act .btn{height:46px;font-size:14.5px}
+body.selmode .main{padding-bottom:140px}
+body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
+.board .col.weekend{background:var(--wk-bg);border-color:var(--wk-line)}
+.board .col.weekend .dayhead{border-bottom-color:var(--wk-line)}
+.board .col.weekend .cell{border-left-color:var(--wk-line)}
+.board .col.weekend .dn{color:#f2c27a}
 .resetrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
 .resetrow .rl{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .resetrow .rb{display:flex;gap:6px}
@@ -400,6 +420,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
           <button id="mAssign" class="assign">Назначаю</button>
         </div>
         <div class="right">
+          <button class="btn" id="selBtn">Выбрать несколько</button>
           <button class="autochip" id="autoChip" hidden></button>
           <button class="btn primary" id="suggestBtn">Предложить график</button>
         </div>
@@ -451,6 +472,13 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
   </div>
 </div>
 
+<div class="selbar" id="selBar" hidden>
+  <div class="sb-in">
+    <div class="sb-top"><b id="selCount">Выбрано: 0</b><button class="sb-clear" id="selClear">Снять выбор</button></div>
+    <div class="sb-act"><button class="btn" id="selWish">Отметить «дано»</button><button class="btn primary" id="selAssign">Назначить смену</button></div>
+  </div>
+</div>
+
 <div id="modalRoot"></div>
 
 <script>
@@ -478,6 +506,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
   let weekStart=mondayOf(new Date());
   let canWrite=false, scrolledToday=false, reqSeq=0, writing=0;
   let fClub="all", fAdmin=null, view="table", mode="wish", focusDay=null;
+  let selMode=false; const sel=new Set(); // "dayIdx|adminId"
   try{const v=JSON.parse(localStorage.getItem("sr-filters")||"{}");if(v.club)fClub=v.club;if(v.admin)fAdmin=v.admin;if(v.view)view=v.view;if(v.mode)mode=v.mode}catch(_){}
   function saveF(){try{localStorage.setItem("sr-filters",JSON.stringify({club:fClub,admin:fAdmin,view,mode}))}catch(_){}}
 
@@ -621,6 +650,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
     renderDeadline();
     if(v==="table")renderTable();else renderShifts();
     renderLoad();
+    renderSel();
     const ro=!canWrite;
     ["copyPrev","clearWk","team","resetRow"].forEach(id=>$(id).hidden=ro);
     document.body.classList.toggle("ro",ro);
@@ -629,21 +659,23 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
   function renderTable(){
     const ds=days(), today=iso(new Date()), st=weekStats(), flags=analyze();
     $("mWish").classList.toggle("on",mode==="wish");$("mAssign").classList.toggle("on",mode==="assign");
-    $("modeHint").textContent=mode==="wish"?"Отмечайте, кто когда может: тап по клетке → смена, «любая» или «не может».":"Назначайте смены: тап по клетке. Если в «дано» указана конкретная смена и она свободна, назначится сразу.";
+    $("modeHint").textContent=selMode?"Выберите клетки. Тап по имени выделит всю неделю человека, тап по дню — весь день.":mode==="wish"?"Отмечайте, кто когда может: тап по клетке → смена, «любая» или «не может».":"Назначайте смены: тап по клетке. Если в «дано» указана конкретная смена и она свободна, назначится сразу.";
     const nAuto=Object.keys(auto).filter(k=>cells[k]).length;
-    $("autoChip").hidden=!nAuto;$("autoChip").textContent=nAuto+" авто · утвердить";
+    $("autoChip").hidden=!nAuto||selMode;$("autoChip").textContent="Утвердить автоподбор · "+nAuto;
 
     let h=`<div class="t-corner c0"></div>`;
-    ds.forEach((d,i)=>{h+=`<button class="t-h${iso(d)===today?" today":""}${focusDay===i?" focus":""}" data-fd="${i}" aria-label="Кто свободен: ${DOW_FULL[i]}"><b>${DOW[i]}</b><span>${String(d.getDate()).padStart(2,"0")}</span></button>`});
+    ds.forEach((d,i)=>{h+=`<button class="t-h${iso(d)===today?" today":""}${i>4?" wk":""}${focusDay===i&&!selMode?" focus":""}" data-fd="${i}" aria-label="${selMode?"Выбрать весь день":"Кто свободен"}: ${DOW_FULL[i]}"><b>${DOW[i]}</b><span>${String(d.getDate()).padStart(2,"0")}</span></button>`});
     h+=`<div class="t-th">Итог</div>`;
-    const freeIds=focusDay!=null?new Set(freeOnDay(focusDay).map(a=>a.id)):null;
+    const freeIds=focusDay!=null&&!selMode?new Set(freeOnDay(focusDay).map(a=>a.id)):null;
     team.admins.forEach(a=>{
       const S=st[a.id], low=S.n<=1;
-      h+=`<div class="t-name c0${low?" low":""}"><span class="sw" style="background:${color(a.id)}"></span><span class="nm">${esc(a.name)}</span></div>`;
+      h+=`<button class="t-name c0${low?" low":""}" data-row="${a.id}" aria-label="${selMode?"Выбрать всю неделю: ":""}${esc(a.name)}"><span class="sw" style="background:${color(a.id)}"></span><span class="nm">${esc(a.name)}</span></button>`;
       ds.forEach((d,i)=>{
         const s=adminDaySlot(d,a.id), w=wishOf(d,a.id), wr=wishRaw(d,a.id), k=s?key(d,s.id):null;
-        const cls=["t-c"];if(iso(d)===today)cls.push("today");
-        if(freeIds&&focusDay===i)cls.push(freeIds.has(a.id)?"free":"notfree");
+        const cls=["t-c"];if(iso(d)===today)cls.push("today");if(i>4)cls.push("wk");
+        if(selMode&&sel.has(i+"|"+a.id))cls.push("sel");
+        if(selMode){}
+        else if(freeIds&&focusDay===i)cls.push(freeIds.has(a.id)?"free":"notfree");
         else if(freeIds)cls.push("notfree");
         let inner="",dot="";
         if(s){
@@ -664,7 +696,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
 
     // free-day bar
     const fb=$("freeBar");
-    if(focusDay!=null){
+    if(focusDay!=null&&!selMode){
       const d=ds[focusDay], free=freeOnDay(focusDay), holes=team.slots.filter(s=>!admin(get(d,s.id)));
       fb.hidden=false;
       fb.innerHTML=`<div class="fb-top"><b>${DOW_FULL[focusDay]}, ${d.getDate()} ${MON[d.getMonth()]}: свободны</b><button class="x" id="fbClose" aria-label="Закрыть">×</button></div>
@@ -674,7 +706,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
     }else fb.hidden=true;
 
     $("legend").innerHTML=team.slots.map(s=>`<span><i class="lbl as-${s.id}" style="border-radius:4px">${slotTag(s)}</i>${esc(slotName(s))}</span>`).join("")+
-      `<span><i class="lbl w-any def">✓</i>без отметки = любая</span><span><i class="lbl w-any">✓</i>любая (отмечено)</span><span><i class="lbl w-no">✕</i>не может</span><span><i class="lbl w-bol-d">Б·Д</i>светлая — «дано»</span>`;
+      `<span><i class="lbl as-bol-d auto">Б·Д</i>пунктир — предложено автоподбором</span><span><i class="lbl w-any def">✓</i>без отметки = любая</span><span><i class="lbl w-any">✓</i>любая (отмечено)</span><span><i class="lbl w-no">✕</i>не может</span><span><i class="lbl w-bol-d">Б·Д</i>светлая — «дано»</span>`;
   }
 
   function renderShifts(){
@@ -823,6 +855,62 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
     const sk=$("skip");if(sk)sk.addEventListener("click",()=>{const n=nextEmpty(dayIdx,slotId);if(n)openCell(n[0],n[1]);else close()});
   }
 
+  // ---------- multi-select ----------
+  function renderSel(){
+    const on=selMode&&view==="table"&&canWrite;
+    $("selBtn").textContent=selMode?"Готово":"Выбрать несколько";
+    $("selBtn").classList.toggle("on",selMode);
+    $("selBar").hidden=!on;
+    document.body.classList.toggle("selmode",on);
+    $("selCount").textContent=sel.size?"Выбрано: "+sel.size+" "+plural(sel.size,"клетка","клетки","клеток"):"Тапайте клетки, имена или дни";
+    $("selWish").disabled=!sel.size;$("selAssign").disabled=!sel.size;$("selClear").hidden=!sel.size;
+  }
+  function selList(){return[...sel].map(k=>{const [i,a]=k.split("|");return{i:+i,a}}).filter(x=>admin(x.a)).sort((x,y)=>x.i-y.i)}
+  function openBulkWish(){
+    const n=sel.size;
+    const opts=team.slots.map(s=>[s.id,slotName(s),s.from+"–"+s.to]).concat([["any","Любая смена","Так считается и без отметки"],["no","Не может","Не ставить в эти дни"]]);
+    openModal(head("Дано для выбранных",n+" "+plural(n,"клетка","клетки","клеток"),"Отметка заменит прежние")+
+      `<div class="wishgrid">${opts.map(([v,t,s2],i)=>`<button class="wbtn${opts.length%2&&i===opts.length-1?" full":""}" data-v="${v}"><span class="tagl lbl w-${v}">${WISH_TAG[v]}</span><b>${esc(t)}</b><span>${esc(s2)}</span></button>`).join("")}</div>
+      <div class="sh-foot"><button class="btn" id="bwClr">Сбросить отметки</button><button class="btn" data-close>Отмена</button></div>`);
+    const apply=async v=>{
+      const snap=snapshot(), nw=Object.assign({},wish), ds=days();
+      selList().forEach(({i,a})=>{const k=wkey(ds[i],a);if(v)nw[k]=v;else delete nw[k]});
+      close();
+      if(await setWeek(cells,auto,nw)){haptic.ok();selMode=false;sel.clear();render();toast(v?`Отмечено: ${n}`:`Сброшено: ${n}`,"Отменить",()=>restore(snap))}
+    };
+    root.querySelectorAll(".wbtn").forEach(b=>b.addEventListener("click",()=>apply(b.dataset.v)));
+    $("bwClr").addEventListener("click",()=>apply(null));
+  }
+  function openBulkAssign(){
+    const n=sel.size;
+    const rows=team.slots.map(s=>`<button class="slotopt" data-s="${s.id}"><span class="l"><i class="lbl as-${s.id}">${slotTag(s)}</i><span class="t"><b>${esc(slotName(s))}</b><span>${esc(s.from)}–${esc(s.to)}</span></span></span><span class="r">Всем выбранным</span></button>`).join("");
+    openModal(head("Назначить выбранным",n+" "+plural(n,"клетка","клетки","клеток"),"Занятые смены и конфликты будут пропущены")+
+      `<div class="opts">${rows}</div><div class="sh-foot"><button class="btn danger" id="baClr">Снять смены</button><button class="btn" data-close>Отмена</button></div>`);
+    const run=async slotId=>{
+      const snap=snapshot(), ds=days(), work=Object.assign({},cells), na=Object.assign({},auto);
+      let ok=0,skip=[];
+      selList().forEach(({i,a})=>{
+        const d=ds[i];
+        if(!slotId){team.slots.forEach(s=>{const k=key(d,s.id);if(work[k]===a){delete work[k];delete na[k];ok++}});return}
+        const s=slotById(slotId), k=key(d,slotId), holder=work[k];
+        if(holder&&holder!==a&&admin(holder)){skip.push(`${DOW[i]}: смена уже у ${admin(holder).name}`);return}
+        const prev={};team.slots.forEach(x=>{const kk=key(d,x.id);if(x.id!==slotId&&work[kk]===a){prev[kk]=a;delete work[kk]}});
+        if(conflictFor(a,i,s,work,true).lvl==="bad"){Object.assign(work,prev);skip.push(`${DOW[i]}, ${admin(a).name}: пересечение`);return}
+        Object.keys(prev).forEach(kk=>delete na[kk]);
+        work[k]=a;delete na[k];ok++;
+      });
+      close();
+      if(await setWeek(work,na)){
+        haptic.ok();selMode=false;sel.clear();render();
+        const msg=slotId?`Назначено: ${ok}${skip.length?", пропущено: "+skip.length:""}`:`Снято смен: ${ok}`;
+        toast(msg,"Отменить",()=>restore(snap));
+        if(skip.length)setTimeout(()=>openModal(head("Пропущено","Не удалось назначить "+skip.length)+`<div class="sg-list">${skip.map(t=>`<div class="sg-row"><div>${esc(t)}</div></div>`).join("")}</div><div class="sh-foot"><button class="btn" data-close>Понятно</button></div>`),400);
+      }
+    };
+    root.querySelectorAll(".slotopt").forEach(b=>b.addEventListener("click",()=>run(b.dataset.s)));
+    $("baClr").addEventListener("click",()=>run(null));
+  }
+
   // ---------- suggest ----------
   // Fills only empty slots, keeps everything already assigned ("дано" first).
   // Candidates: people marked for this slot or "любая"; never "не может"; no overlaps, ≥10 h rest, one shift a day.
@@ -866,7 +954,7 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
     const ap=$("sgApply");if(ap)ap.addEventListener("click",async()=>{
       const snap=snapshot();close();
       const na=Object.assign({},auto);keys.forEach(k=>na[k]=true);
-      if(await setWeek(work,na)){haptic.ok();toast(`Добавлено смен: ${keys.length}`,"Отменить",()=>restore(snap))}
+      if(await setWeek(work,na)){haptic.ok();toast(`Предложено смен: ${keys.length} — проверьте и утвердите`,"Отменить",()=>restore(snap))}
     });
   }
   function approveAuto(){const snap=snapshot();setWeek(cells,{}).then(ok=>{if(ok)toast("Смены утверждены","Отменить",()=>restore(snap))})}
@@ -1016,10 +1104,21 @@ code{font-family:var(--f-mono);color:var(--fg);background:var(--panel-2);padding
   // ---------- events ----------
   $("board").addEventListener("click",e=>{const c=e.target.closest(".cell");if(c)openCell(+c.dataset.d,c.dataset.s)});
   $("tbl").addEventListener("click",e=>{
-    const h=e.target.closest(".t-h");if(h){haptic.tap();const i=+h.dataset.fd;focusDay=focusDay===i?null:i;render();return}
+    const h=e.target.closest(".t-h");
+    if(h){haptic.tap();const i=+h.dataset.fd;
+      if(selMode){toggleGroup(team.admins.map(a=>i+"|"+a.id));return}
+      focusDay=focusDay===i?null:i;render();return}
+    const r=e.target.closest(".t-name");
+    if(r){if(selMode){haptic.tap();toggleGroup([0,1,2,3,4,5,6].map(i=>i+"|"+r.dataset.row))}return}
     const c=e.target.closest(".t-c");if(!c||!canWrite)return;
+    if(selMode){haptic.tap();const k=c.dataset.d+"|"+c.dataset.a;sel.has(k)?sel.delete(k):sel.add(k);render();return}
     if(mode==="wish")openWish(+c.dataset.d,c.dataset.a);else tableAssign(+c.dataset.d,c.dataset.a);
   });
+  function toggleGroup(keys){const all=keys.every(k=>sel.has(k));keys.forEach(k=>all?sel.delete(k):sel.add(k));render()}
+  $("selBtn").addEventListener("click",()=>{haptic.tap();selMode=!selMode;sel.clear();focusDay=null;render()});
+  $("selClear").addEventListener("click",()=>{haptic.tap();sel.clear();render()});
+  $("selWish").addEventListener("click",()=>{if(sel.size)openBulkWish()});
+  $("selAssign").addEventListener("click",()=>{if(sel.size)openBulkAssign()});
   $("mWish").addEventListener("click",()=>{mode="wish";saveF();haptic.tap();render()});
   $("mAssign").addEventListener("click",()=>{mode="assign";saveF();haptic.tap();render()});
   $("suggestBtn").addEventListener("click",openSuggest);
