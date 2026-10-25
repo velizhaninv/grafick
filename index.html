@@ -367,8 +367,21 @@ body.selmode .t-name{cursor:pointer}
 .selbar .sb-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
 .selbar .sb-top b{font-weight:600}
 .sb-clear{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13.5px;padding:4px 0}
-.selbar .sb-act{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.selbar .sb-act .btn{height:46px;font-size:14.5px}
+.sb-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.sb-tiles.assign{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sbt{height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);display:flex;align-items:center;justify-content:center;gap:7px;padding:0 8px;cursor:pointer;min-width:0;font-size:13px;font-weight:500}
+.sbt span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+i.lbl{font-style:normal;display:inline-grid;place-items:center;font-family:var(--f-mono);font-weight:600;line-height:1}
+.sbt i.lbl{width:auto;height:22px;padding:0 6px;border-radius:5px;font-size:10.5px;flex:none}
+.sb-tiles.wish .sbt{flex-direction:column;gap:3px;height:52px;padding:4px 6px}
+.sb-tiles.wish .sbt span{font-size:11.5px;color:var(--muted)}
+.sb-tiles.wish .sbt.ghost span{font-size:13px}
+.sbt:active{background:var(--panel-2)}
+.sbt:disabled{opacity:.4;cursor:default}
+.sbt.ghost{background:transparent;color:var(--muted)}
+.sbt.danger{color:#ec8a78}
+body.selmode .main{padding-bottom:170px}
+body.selmode .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))}
 body.selmode .main{padding-bottom:140px}
 body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 .board .col.weekend{background:var(--wk-bg);border-color:var(--wk-line)}
@@ -531,7 +544,7 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 <div class="selbar" id="selBar" hidden>
   <div class="sb-in">
     <div class="sb-top"><b id="selCount">Выбрано: 0</b><button class="sb-clear" id="selClear">Снять выбор</button></div>
-    <div class="sb-act"><button class="btn" id="selWish">Отметить «дано»</button><button class="btn primary" id="selAssign">Назначить смену</button></div>
+    <div class="sb-tiles" id="selTiles"></div>
   </div>
 </div>
 
@@ -942,54 +955,52 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
     $("selBar").hidden=!on;
     document.body.classList.toggle("selmode",on);
     $("selCount").textContent=sel.size?"Выбрано: "+sel.size+" "+plural(sel.size,"клетка","клетки","клеток"):"Тапайте клетки, имена или дни";
-    $("selWish").disabled=!sel.size;$("selAssign").disabled=!sel.size;$("selClear").hidden=!sel.size;
-    $("selWish").hidden=approved;document.querySelector(".sb-act").style.gridTemplateColumns=approved?"1fr":"";
+    $("selClear").hidden=!sel.size;
+    const wishMode=mode==="wish"&&!approved, dis=sel.size?"":" disabled";
+    const short=s=>(SHORT_MOB[s.short]||s.short)+" · "+s.label.toLowerCase();
+    let t="";
+    if(wishMode){
+      t=team.slots.map(s=>`<button class="sbt" data-w="${s.id}"${dis}><i class="lbl w-${s.id}">${slotTag(s)}</i><span>${esc(short(s))}</span></button>`).join("")+
+        `<button class="sbt" data-w="any"${dis}><i class="lbl w-any">✓</i><span>Любая</span></button>`+
+        `<button class="sbt" data-w="no"${dis}><i class="lbl w-no">✕</i><span>Не может</span></button>`+
+        `<button class="sbt ghost" data-w=""${dis}><span>Сбросить</span></button>`;
+    }else{
+      t=team.slots.map(s=>`<button class="sbt" data-a="${s.id}"${dis}><i class="lbl as-${s.id}">${slotTag(s)}</i><span>${esc(short(s))}</span></button>`).join("")+
+        `<button class="sbt ghost danger" data-a=""${dis}><span>Снять смены</span></button>`;
+    }
+    $("selTiles").innerHTML=t;
+    $("selTiles").className="sb-tiles "+(wishMode?"wish":"assign");
   }
   function selList(){return[...sel].map(k=>{const [i,a]=k.split("|");return{i:+i,a}}).filter(x=>admin(x.a)).sort((x,y)=>x.i-y.i)}
-  function openBulkWish(){
-    const n=sel.size;
-    const opts=team.slots.map(s=>[s.id,slotName(s),s.from+"–"+s.to]).concat([["any","Любая смена","Так считается и без отметки"],["no","Не может","Не ставить в эти дни"]]);
-    openModal(head("Дано для выбранных",n+" "+plural(n,"клетка","клетки","клеток"),"Отметка заменит прежние")+
-      `<div class="wishgrid">${opts.map(([v,t,s2],i)=>`<button class="wbtn${opts.length%2&&i===opts.length-1?" full":""}" data-v="${v}"><span class="tagl lbl w-${v}">${WISH_TAG[v]}</span><b>${esc(t)}</b><span>${esc(s2)}</span></button>`).join("")}</div>
-      <div class="sh-foot"><button class="btn" id="bwClr">Сбросить отметки</button><button class="btn" data-close>Отмена</button></div>`);
-    const apply=async v=>{
-      const snap=snapshot(), nw=Object.assign({},wish), ds=days();
-      selList().forEach(({i,a})=>{const k=wkey(ds[i],a);if(v)nw[k]=v;else delete nw[k]});
-      close();
-      if(await setWeek(cells,auto,nw)){haptic.ok();selMode=false;sel.clear();render();toast(v?`Отмечено: ${n}`:`Сброшено: ${n}`,"Отменить",()=>restore(snap))}
-    };
-    root.querySelectorAll(".wbtn").forEach(b=>b.addEventListener("click",()=>apply(b.dataset.v)));
-    $("bwClr").addEventListener("click",()=>apply(null));
+  // apply a "дано" mark to every selected cell (null = reset to "любая")
+  async function bulkWish(v){
+    const n=sel.size;if(!n)return;
+    const snap=snapshot(), nw=Object.assign({},wish), ds=days();
+    selList().forEach(({i,a})=>{const k=wkey(ds[i],a);if(v)nw[k]=v;else delete nw[k]});
+    if(await setWeek(cells,auto,nw)){haptic.ok();sel.clear();render();toast(v?`Отмечено: ${n}`:`Сброшено: ${n}`,"Отменить",()=>restore(snap))}
   }
-  function openBulkAssign(){
-    const n=sel.size;
-    const rows=team.slots.map(s=>`<button class="slotopt" data-s="${s.id}"><span class="l"><i class="lbl as-${s.id}">${slotTag(s)}</i><span class="t"><b>${esc(slotName(s))}</b><span>${esc(s.from)}–${esc(s.to)}</span></span></span><span class="r">Всем выбранным</span></button>`).join("");
-    openModal(head("Назначить выбранным",n+" "+plural(n,"клетка","клетки","клеток"),"Занятые смены и конфликты будут пропущены")+
-      `<div class="opts">${rows}</div><div class="sh-foot"><button class="btn danger" id="baClr">Снять смены</button><button class="btn" data-close>Отмена</button></div>`);
-    const run=async slotId=>{
-      const snap=snapshot(), ds=days(), work=Object.assign({},cells), na=Object.assign({},auto);
-      let ok=0,skip=[];
-      selList().forEach(({i,a})=>{
-        const d=ds[i];
-        if(!slotId){team.slots.forEach(s=>{const k=key(d,s.id);if(work[k]===a){delete work[k];delete na[k];ok++}});return}
-        const s=slotById(slotId), k=key(d,slotId), holder=work[k];
-        if(holder&&holder!==a&&admin(holder)){skip.push(`${DOW[i]}: смена уже у ${admin(holder).name}`);return}
-        const prev={};team.slots.forEach(x=>{const kk=key(d,x.id);if(x.id!==slotId&&work[kk]===a){prev[kk]=a;delete work[kk]}});
-        const cf=conflictFor(a,i,s,work,true);
-        if(cf.lvl){Object.assign(work,prev);skip.push(`${DOW[i]}, ${admin(a).name}: ${cf.lvl==="bad"?"пересечение":"мало отдыха между сменами"}`);return}
-        Object.keys(prev).forEach(kk=>delete na[kk]);
-        work[k]=a;delete na[k];ok++;
-      });
-      close();
-      if(await setWeek(work,na)){
-        haptic.ok();selMode=false;sel.clear();render();
-        const msg=slotId?`Назначено: ${ok}${skip.length?", пропущено: "+skip.length:""}`:`Снято смен: ${ok}`;
-        toast(msg,"Отменить",()=>restore(snap));
-        if(skip.length)setTimeout(()=>openModal(head("Пропущено","Не удалось назначить "+skip.length)+`<div class="sg-list">${skip.map(t=>`<div class="sg-row"><div>${esc(t)}</div></div>`).join("")}</div><div class="sh-foot"><button class="btn" data-close>Понятно</button></div>`),400);
-      }
-    };
-    root.querySelectorAll(".slotopt").forEach(b=>b.addEventListener("click",()=>run(b.dataset.s)));
-    $("baClr").addEventListener("click",()=>run(null));
+  // assign one slot to every selected person-day (null = remove their shifts)
+  async function bulkAssign(slotId){
+    if(!sel.size)return;
+    const snap=snapshot(), ds=days(), work=Object.assign({},cells), na=Object.assign({},auto);
+    let ok=0,skip=[];
+    selList().forEach(({i,a})=>{
+      const d=ds[i];
+      if(!slotId){team.slots.forEach(s=>{const k=key(d,s.id);if(work[k]===a){delete work[k];delete na[k];ok++}});return}
+      const s=slotById(slotId), k=key(d,slotId), holder=work[k];
+      if(holder&&holder!==a&&admin(holder)){skip.push(`${DOW[i]}: смена уже у ${admin(holder).name}`);return}
+      const prev={};team.slots.forEach(x=>{const kk=key(d,x.id);if(x.id!==slotId&&work[kk]===a){prev[kk]=a;delete work[kk]}});
+      const cf=conflictFor(a,i,s,work,true);
+      if(cf.lvl){Object.assign(work,prev);skip.push(`${DOW[i]}, ${admin(a).name}: ${cf.lvl==="bad"?"пересечение":"мало отдыха между сменами"}`);return}
+      Object.keys(prev).forEach(kk=>delete na[kk]);
+      work[k]=a;delete na[k];ok++;
+    });
+    if(await setWeek(work,na)){
+      haptic.ok();sel.clear();render();
+      const msg=slotId?`Назначено: ${ok}${skip.length?", пропущено: "+skip.length:""}`:`Снято смен: ${ok}`;
+      toast(msg,"Отменить",()=>restore(snap));
+      if(skip.length)setTimeout(()=>openModal(head("Пропущено","Не удалось назначить "+skip.length)+`<div class="sg-list">${skip.map(t=>`<div class="sg-row"><div>${esc(t)}</div></div>`).join("")}</div><div class="sh-foot"><button class="btn" data-close>Понятно</button></div>`),400);
+    }
   }
 
   // ---------- suggest ----------
@@ -1222,8 +1233,10 @@ body.selmode .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
   function toggleGroup(keys){const all=keys.every(k=>sel.has(k));keys.forEach(k=>all?sel.delete(k):sel.add(k));render()}
   $("selBtn").addEventListener("click",()=>{haptic.tap();selMode=!selMode;sel.clear();focusDay=null;render()});
   $("selClear").addEventListener("click",()=>{haptic.tap();sel.clear();render()});
-  $("selWish").addEventListener("click",()=>{if(sel.size)openBulkWish()});
-  $("selAssign").addEventListener("click",()=>{if(sel.size)openBulkAssign()});
+  $("selTiles").addEventListener("click",e=>{
+    const b=e.target.closest(".sbt");if(!b||b.disabled)return;haptic.tap();
+    if("w" in b.dataset)bulkWish(b.dataset.w||null);else bulkAssign(b.dataset.a||null);
+  });
   $("mWish").addEventListener("click",()=>{mode="wish";saveF();haptic.tap();render()});
   $("mAssign").addEventListener("click",()=>{mode="assign";saveF();haptic.tap();render()});
   $("suggestBtn").addEventListener("click",openSuggest);
